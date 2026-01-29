@@ -50,12 +50,38 @@ export function handleMessageUpdate(
       : undefined;
   const evtType = typeof assistantRecord?.type === "string" ? assistantRecord.type : "";
 
-  if (evtType !== "text_delta" && evtType !== "text_start" && evtType !== "text_end") {
+  const isOutputText = evtType.includes("output_text");
+  if (
+    evtType !== "text_delta" &&
+    evtType !== "text_start" &&
+    evtType !== "text_end" &&
+    !isOutputText
+  ) {
     return;
   }
 
   const delta = typeof assistantRecord?.delta === "string" ? assistantRecord.delta : "";
-  const content = typeof assistantRecord?.content === "string" ? assistantRecord.content : "";
+  const contentRaw = assistantRecord?.content;
+  const content =
+    typeof contentRaw === "string"
+      ? contentRaw
+      : Array.isArray(contentRaw)
+        ? contentRaw
+            .map((item) => {
+              if (item && typeof item === "object" && "text" in (item as Record<string, unknown>)) {
+                const t = (item as Record<string, unknown>).text;
+                return typeof t === "string" ? t : "";
+              }
+              return "";
+            })
+            .filter(Boolean)
+            .join("")
+        : "";
+  const textField = typeof assistantRecord?.text === "string" ? assistantRecord.text : "";
+  const outputTextField =
+    typeof (assistantRecord as Record<string, unknown>)?.output_text === "string"
+      ? ((assistantRecord as Record<string, unknown>).output_text as string)
+      : "";
 
   appendRawStream({
     ts: Date.now(),
@@ -68,11 +94,18 @@ export function handleMessageUpdate(
   });
 
   let chunk = "";
-  if (evtType === "text_delta") {
-    chunk = delta;
-  } else if (evtType === "text_start" || evtType === "text_end") {
-    if (delta) {
-      chunk = delta;
+  const firstNonEmpty = (...vals: string[]) => vals.find((v) => !!v) ?? "";
+
+  if (evtType === "text_delta" || evtType === "output_text.delta") {
+    chunk = firstNonEmpty(delta, textField, outputTextField, content);
+  } else if (
+    evtType === "text_start" ||
+    evtType === "text_end" ||
+    evtType === "output_text.start" ||
+    evtType === "output_text.end"
+  ) {
+    if (delta || textField || outputTextField || content) {
+      chunk = firstNonEmpty(delta, textField, outputTextField, content);
     } else if (content) {
       // KNOWN: Some providers resend full content on `text_end`.
       // We only append a suffix (or nothing) to keep output monotonic.
@@ -140,11 +173,13 @@ export function handleMessageUpdate(
     }
   }
 
+  const isEndEvent = evtType === "text_end" || evtType === "output_text.end";
+
   if (ctx.params.onBlockReply && ctx.blockChunking && ctx.state.blockReplyBreak === "text_end") {
     ctx.blockChunker?.drain({ force: false, emit: ctx.emitBlockChunk });
   }
 
-  if (evtType === "text_end" && ctx.state.blockReplyBreak === "text_end") {
+  if (isEndEvent && ctx.state.blockReplyBreak === "text_end") {
     if (ctx.blockChunker?.hasBuffered()) {
       ctx.blockChunker.drain({ force: true, emit: ctx.emitBlockChunk });
       ctx.blockChunker.reset();
@@ -175,7 +210,14 @@ export function handleMessageEnd(
     rawThinking: extractAssistantThinking(assistantMessage),
   });
 
-  const text = ctx.stripBlockTags(rawText, { thinking: false, final: false });
+  let text = ctx.stripBlockTags(rawText, { thinking: false, final: false });
+  if (!text && ctx.state.deltaBuffer) {
+    text = ctx.stripBlockTags(ctx.state.deltaBuffer, { thinking: false, final: false });
+  }
+  if (!text) {
+    // Last-resort: use rawText so we don't emit "(no output)" when providers omit <final>.
+    text = rawText.trim();
+  }
   const rawThinking =
     ctx.state.includeReasoning || ctx.state.streamReasoning
       ? extractAssistantThinking(assistantMessage) || extractThinkingFromTaggedText(rawText)
@@ -202,6 +244,26 @@ export function handleMessageEnd(
   };
 
   if (shouldEmitReasoningBeforeAnswer) maybeEmitReasoning();
+
+  // Ensure a final assistant stream event so chat buffers get populated even if no deltas.
+  if (text) {
+    emitAgentEvent({
+      runId: ctx.params.runId,
+      stream: "assistant",
+      data: { text },
+    });
+    void ctx.params.onAgentEvent?.({
+      stream: "assistant",
+      data: { text },
+    });
+  }
+
+  // Fallback: if we have text, emit it as a block reply so UIs that rely on onBlockReply
+  // (e.g., TUI) get something even when streaming chunks were missed or filtered.
+  if (text && onBlockReply && text !== ctx.state.lastBlockReplyText) {
+    ctx.state.lastBlockReplyText = text;
+    void onBlockReply({ text });
+  }
 
   if (
     (ctx.state.blockReplyBreak === "message_end" ||

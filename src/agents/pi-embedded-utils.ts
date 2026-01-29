@@ -171,15 +171,19 @@ export function stripThinkingTagsFromText(text: string): string {
 }
 
 export function extractAssistantText(msg: AssistantMessage): string {
-  const isTextBlock = (block: unknown): block is { type: "text"; text: string } => {
+  const isTextBlock = (block: unknown): block is { type: "text" | "output_text"; text: string } => {
     if (!block || typeof block !== "object") return false;
     const rec = block as Record<string, unknown>;
-    return rec.type === "text" && typeof rec.text === "string";
+    return (rec.type === "text" || rec.type === "output_text") && typeof rec.text === "string";
   };
 
   const blocks = Array.isArray(msg.content)
-    ? msg.content
-        .filter(isTextBlock)
+    ? (
+        msg.content.filter(isTextBlock) as Array<{
+          type: "text" | "output_text";
+          text: string;
+        }>
+      )
         .map((c) =>
           stripThinkingTagsFromText(
             stripDowngradedToolCallText(stripMinimaxToolCallXml(c.text)),
