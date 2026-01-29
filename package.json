@@ -240,6 +240,7 @@
   "pnpm": {
     "minimumReleaseAge": 2880,
     "overrides": {
+      "clawdbot": "workspace:2026.1.25",
       "@sinclair/typebox": "0.34.47",
       "hono": "4.11.4",
       "tar": "7.5.4"

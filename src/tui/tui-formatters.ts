@@ -78,7 +78,7 @@ export function extractContentFromMessage(message: unknown): string {
   for (const block of content) {
     if (!block || typeof block !== "object") continue;
     const rec = block as Record<string, unknown>;
-    if (rec.type === "text" && typeof rec.text === "string") {
+    if ((rec.type === "text" || rec.type === "output_text") && typeof rec.text === "string") {
       parts.push(rec.text);
     }
   }
