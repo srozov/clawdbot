@@ -25,10 +25,9 @@ export function isReasoningTagProvider(provider: string | undefined | null): boo
     return true;
   }
 
-  // Handle Minimax (M2.1 is chatty/reasoning-like)
-  if (normalized.includes("minimax")) {
-    return true;
-  }
+  // MiniMax was previously included here but was removed because MiniMax models
+  // don't output <think>/<final> tags. Including it caused enforceFinalTag=true,
+  // which filtered out all streaming content and resulted in "(no output)" in TUI.
 
   return false;
 }
