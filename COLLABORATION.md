@@ -67,13 +67,8 @@ workspace-trader/stock-picking-agency          → /home/agi01/stock-picking-age
 ## Claude Code Agent (via CLI Backend)
 
 Claude Code is a **native OpenClaw agent** powered by the CLI backend. It runs as a
-full implementation agent with plan mode support.
-
-### Usage
-
-```bash
-openclaw agent --message "<task>" --model claude-cli/opus
-```
+full implementation agent with plan mode support. Conductor invokes it via internal
+`runClaudeCliAgent()` API, not via shell commands.
 
 ### Workflow
 
