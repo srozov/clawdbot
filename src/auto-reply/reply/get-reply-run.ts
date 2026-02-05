@@ -306,7 +306,7 @@ export async function runPreparedReply(
     }
   }
   const sessionIdFinal = sessionId ?? crypto.randomUUID();
-  const sessionFile = resolveSessionFilePath(sessionIdFinal, sessionEntry);
+  const sessionFile = resolveSessionFilePath(sessionIdFinal, sessionEntry, { agentId });
   const queueBodyBase = [threadStarterNote, baseBodyFinal].filter(Boolean).join("\n\n");
   const queueMessageId = sessionCtx.MessageSid?.trim();
   const queueMessageIdHint = queueMessageId ? `[message_id: ${queueMessageId}]` : "";

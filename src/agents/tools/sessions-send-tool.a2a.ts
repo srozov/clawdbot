@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 
+import { appendAssistantMessageToSessionTranscript } from "../../config/sessions/transcript.js";
+import { resolveAgentIdFromSessionKey } from "../../config/sessions.js";
 import { callGateway } from "../../gateway/call.js";
 import { formatErrorMessage } from "../../infra/errors.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
@@ -10,7 +12,6 @@ import { resolveAnnounceTarget } from "./sessions-announce-target.js";
 import {
   buildAgentToAgentAnnounceContext,
   buildAgentToAgentReplyContext,
-  isAnnounceSkip,
   isReplySkip,
 } from "./sessions-send-helpers.js";
 
@@ -56,29 +57,23 @@ export async function runSessionsSendA2AFlow(params: {
     });
     const targetChannel = announceTarget?.channel ?? "unknown";
 
-    if (
-      params.maxPingPongTurns > 0 &&
-      params.requesterSessionKey &&
-      params.requesterSessionKey !== params.targetSessionKey
-    ) {
-      let currentSessionKey = params.requesterSessionKey;
-      let nextSessionKey = params.targetSessionKey;
+    // Ping-pong loop: stay in target session, poll for replies, forward to requester
+    if (params.maxPingPongTurns > 0 && params.requesterSessionKey && announceTarget) {
       let incomingMessage = latestReply;
       for (let turn = 1; turn <= params.maxPingPongTurns; turn += 1) {
-        const currentRole =
-          currentSessionKey === params.requesterSessionKey ? "requester" : "target";
+        // Check for new reply in target session by running another agent step
         const replyPrompt = buildAgentToAgentReplyContext({
           requesterSessionKey: params.requesterSessionKey,
           requesterChannel: params.requesterChannel,
           targetSessionKey: params.displayKey,
           targetChannel,
-          currentRole,
+          currentRole: "target",
           turn,
           maxTurns: params.maxPingPongTurns,
         });
         const replyText = await runAgentStep({
-          sessionKey: currentSessionKey,
-          message: incomingMessage,
+          sessionKey: params.targetSessionKey,
+          message: incomingMessage ?? "Continue the conversation.",
           extraSystemPrompt: replyPrompt,
           timeoutMs: params.announceTimeoutMs,
           lane: AGENT_LANE_NESTED,
@@ -86,15 +81,35 @@ export async function runSessionsSendA2AFlow(params: {
         if (!replyText || isReplySkip(replyText)) {
           break;
         }
+        // Forward this reply to the requester's channel
         latestReply = replyText;
+        try {
+          await callGateway({
+            method: "send",
+            params: {
+              to: announceTarget.to,
+              message: replyText.trim(),
+              channel: announceTarget.channel,
+              accountId: announceTarget.accountId,
+              threadId: announceTarget.threadId,
+              idempotencyKey: crypto.randomUUID(),
+            },
+            timeoutMs: 10_000,
+          });
+        } catch (err) {
+          log.warn("sessions_send pong delivery failed", {
+            runId: runContextId,
+            channel: announceTarget.channel,
+            to: announceTarget.to,
+            error: formatErrorMessage(err),
+          });
+        }
         incomingMessage = replyText;
-        const swap = currentSessionKey;
-        currentSessionKey = nextSessionKey;
-        nextSessionKey = swap;
       }
     }
 
-    const announcePrompt = buildAgentToAgentAnnounceContext({
+    // Write A2A announce context to requester's session (conductor understands A2A, subagent doesn't)
+    const announceContext = buildAgentToAgentAnnounceContext({
       requesterSessionKey: params.requesterSessionKey,
       requesterChannel: params.requesterChannel,
       targetSessionKey: params.displayKey,
@@ -103,22 +118,32 @@ export async function runSessionsSendA2AFlow(params: {
       roundOneReply: primaryReply,
       latestReply,
     });
-    const announceReply = await runAgentStep({
-      sessionKey: params.targetSessionKey,
-      message: "Agent-to-agent announce step.",
-      extraSystemPrompt: announcePrompt,
-      timeoutMs: params.announceTimeoutMs,
-      lane: AGENT_LANE_NESTED,
-    });
-    if (announceTarget && announceReply && announceReply.trim() && !isAnnounceSkip(announceReply)) {
+    if (params.requesterSessionKey) {
+      const requesterAgentId = resolveAgentIdFromSessionKey(params.requesterSessionKey);
+      await appendAssistantMessageToSessionTranscript({
+        agentId: requesterAgentId,
+        sessionKey: params.requesterSessionKey,
+        text: announceContext,
+      }).catch((err) => {
+        log.warn("failed to write A2A announce context to requester session", {
+          runId: runContextId,
+          sessionKey: params.requesterSessionKey,
+          error: formatErrorMessage(err),
+        });
+      });
+    }
+
+    // Deliver the reply directly (no Claude CLI involvement for announce)
+    if (announceTarget && latestReply && latestReply.trim()) {
       try {
         await callGateway({
           method: "send",
           params: {
             to: announceTarget.to,
-            message: announceReply.trim(),
+            message: latestReply.trim(),
             channel: announceTarget.channel,
             accountId: announceTarget.accountId,
+            threadId: announceTarget.threadId,
             idempotencyKey: crypto.randomUUID(),
           },
           timeoutMs: 10_000,

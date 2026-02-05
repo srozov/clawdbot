@@ -1,0 +1,45 @@
+[project]
+name = "cover-letter-gen"
+version = "1.0.0"
+description = "OpenClaw skill for generating tailored cover letters and customized CVs"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "OpenClaw", email = "dev@openclaw.ai"}
+]
+dependencies = [
+    "click>=8.1.7",
+    "pydantic>=2.0.0",
+    "openai>=1.0.0",
+    "aiofiles>=23.0.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.24.0",
+    "markdown>=3.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["cover_letter_gen*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,32 @@
+[
+  {
+    "job_title": "Senior Python Developer",
+    "location": "Zürich",
+    "keywords": ["AI", "ML", "LLM", "FastAPI", "PostgreSQL"],
+    "strategy_id": "core_expertise_0"
+  },
+  {
+    "job_title": "ML Engineer",
+    "location": "Zürich",
+    "keywords": ["machine learning", "deep learning", "PyTorch", "TensorFlow"],
+    "strategy_id": "core_expertise_1"
+  },
+  {
+    "job_title": "Data Scientist",
+    "location": "Zürich",
+    "keywords": ["analytics", "statistics", "Python", "SQL"],
+    "strategy_id": "adjacent_role_0"
+  },
+  {
+    "job_title": "Technical Lead",
+    "location": "Zürich",
+    "keywords": ["team leadership", "architecture", "mentoring"],
+    "strategy_id": "growth_path_0"
+  },
+  {
+    "job_title": "Solutions Architect",
+    "location": "Zürich",
+    "keywords": ["cloud", "AWS", "system design", "consulting"],
+    "strategy_id": "growth_path_1"
+  }
+]

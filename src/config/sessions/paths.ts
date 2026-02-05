@@ -55,7 +55,12 @@ export function resolveSessionFilePath(
   opts?: { agentId?: string },
 ): string {
   const candidate = entry?.sessionFile?.trim();
-  return candidate ? candidate : resolveSessionTranscriptPath(sessionId, opts?.agentId);
+  // For topic sessions, the sessionFile may not be set correctly (gateway may set it to the
+  // main transcript path). Check deliveryContext for threadId and resolve the correct path.
+  const threadId = entry?.deliveryContext?.threadId ?? entry?.lastThreadId;
+  return candidate && !threadId
+    ? candidate
+    : resolveSessionTranscriptPath(sessionId, opts?.agentId, threadId);
 }
 
 export function resolveStorePath(store?: string, opts?: { agentId?: string }) {

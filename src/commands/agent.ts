@@ -7,7 +7,6 @@ import {
 } from "../agents/agent-scope.js";
 import { ensureAuthProfileStore } from "../agents/auth-profiles.js";
 import { runCliAgent } from "../agents/cli-runner.js";
-import { getCliSessionId } from "../agents/cli-session.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../agents/defaults.js";
 import { loadModelCatalog } from "../agents/model-catalog.js";
 import { runWithModelFallback } from "../agents/model-fallback.js";
@@ -35,6 +34,7 @@ import {
 import { type CliDeps, createDefaultDeps } from "../cli/deps.js";
 import { loadConfig } from "../config/config.js";
 import {
+  appendCliRunToSessionTranscript,
   resolveAgentIdFromSessionKey,
   resolveSessionFilePath,
   type SessionEntry,
@@ -386,7 +386,6 @@ export async function agentCommand(
         fallbacksOverride: resolveAgentModelFallbacksOverride(cfg, sessionAgentId),
         run: (providerOverride, modelOverride) => {
           if (isCliProvider(providerOverride, cfg)) {
-            const cliSessionId = getCliSessionId(sessionEntry, providerOverride);
             return runCliAgent({
               sessionId,
               sessionKey,
@@ -400,7 +399,6 @@ export async function agentCommand(
               timeoutMs,
               runId,
               extraSystemPrompt: opts.extraSystemPrompt,
-              cliSessionId,
               images: opts.images,
               streamParams: opts.streamParams,
             });
@@ -491,10 +489,10 @@ export async function agentCommand(
     // Update token+model fields in the session store.
     if (sessionStore && sessionKey) {
       await updateSessionStoreAfterAgentRun({
-        cfg,
         contextTokensOverride: agentCfg?.contextTokens,
         sessionId,
         sessionKey,
+        sessionFile,
         storePath,
         sessionStore,
         defaultProvider: provider,
@@ -503,6 +501,27 @@ export async function agentCommand(
         fallbackModel,
         result,
       });
+    }
+
+    // Persist CLI agent prompt + response to session transcript so the
+    // conversation is visible in the web UI and via sessions_history.
+    if (isCliProvider(fallbackProvider, cfg)) {
+      const responseText =
+        result.payloads
+          ?.map((p) => p.text)
+          .filter(Boolean)
+          .join("\n\n") ?? "";
+      if (responseText.trim()) {
+        await appendCliRunToSessionTranscript({
+          sessionFile,
+          sessionId,
+          prompt: body,
+          responseText,
+          provider: fallbackProvider,
+          model: fallbackModel,
+          usage: result.meta.agentMeta?.usage,
+        }).catch(() => {});
+      }
     }
 
     const payloads = result.payloads ?? [];

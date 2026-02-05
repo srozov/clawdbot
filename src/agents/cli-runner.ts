@@ -1,4 +1,5 @@
 import type { ImageContent } from "@mariozechner/pi-ai";
+import fs from "node:fs/promises";
 import { resolveHeartbeatPrompt } from "../auto-reply/heartbeat.js";
 import type { ThinkLevel } from "../auto-reply/thinking.js";
 import type { OpenClawConfig } from "../config/config.js";
@@ -47,8 +48,9 @@ export async function runCliAgent(params: {
   extraSystemPrompt?: string;
   streamParams?: import("../commands/agent/types.js").AgentStreamParams;
   ownerNumbers?: string[];
-  cliSessionId?: string;
   images?: ImageContent[];
+  /** Whether to resume an existing session (true) or create a new one (false/undefined) */
+  useResume?: boolean;
 }): Promise<EmbeddedPiRunResult> {
   const started = Date.now();
   const resolvedWorkspace = resolveUserPath(params.workspaceDir);
@@ -63,12 +65,7 @@ export async function runCliAgent(params: {
   const normalizedModel = normalizeCliModel(modelId, backend);
   const modelDisplay = `${params.provider}/${modelId}`;
 
-  const extraSystemPrompt = [
-    params.extraSystemPrompt?.trim(),
-    "Tools are disabled in this session. Do not call tools.",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const extraSystemPrompt = params.extraSystemPrompt?.trim() ?? "";
 
   const sessionLabel = params.sessionKey ?? params.sessionId;
   const { contextFiles } = await resolveBootstrapContextForRun({
@@ -108,13 +105,17 @@ export async function runCliAgent(params: {
 
   const { sessionId: cliSessionIdToSend, isNew } = resolveSessionIdToSend({
     backend,
-    cliSessionId: params.cliSessionId,
+    openClawSessionId: params.sessionId,
+    sessionFileExists: params.sessionFile
+      ? await fs
+          .access(params.sessionFile)
+          .then(() => true)
+          .catch(() => false)
+      : undefined,
   });
+  // With unified session IDs, we always send the session ID and resume if possible
   const useResume = Boolean(
-    params.cliSessionId &&
-    cliSessionIdToSend &&
-    backend.resumeArgs &&
-    backend.resumeArgs.length > 0,
+    !isNew && cliSessionIdToSend && backend.resumeArgs && backend.resumeArgs.length > 0,
   );
   const sessionIdSent = cliSessionIdToSend
     ? useResume || Boolean(backend.sessionArg) || Boolean(backend.sessionArgs?.length)
@@ -216,6 +217,8 @@ export async function runCliAgent(params: {
       await cleanupSuspendedCliProcesses(backend);
       if (useResume && cliSessionIdToSend) {
         await cleanupResumeProcesses(backend, cliSessionIdToSend);
+        // Small delay to ensure killed processes have fully terminated before starting new CLI
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       const result = await runCommandWithTimeout([backend.command, ...args], {
@@ -312,7 +315,6 @@ export async function runClaudeCliAgent(params: {
   runId: string;
   extraSystemPrompt?: string;
   ownerNumbers?: string[];
-  claudeSessionId?: string;
   images?: ImageContent[];
 }): Promise<EmbeddedPiRunResult> {
   return runCliAgent({
@@ -329,7 +331,6 @@ export async function runClaudeCliAgent(params: {
     runId: params.runId,
     extraSystemPrompt: params.extraSystemPrompt,
     ownerNumbers: params.ownerNumbers,
-    cliSessionId: params.claudeSessionId,
     images: params.images,
   });
 }

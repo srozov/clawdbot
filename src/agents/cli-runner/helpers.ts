@@ -346,14 +346,17 @@ export function resolveSystemPromptUsage(params: {
 
 export function resolveSessionIdToSend(params: {
   backend: CliBackendConfig;
-  cliSessionId?: string;
+  openClawSessionId?: string;
+  sessionFileExists?: boolean;
 }): { sessionId?: string; isNew: boolean } {
   const mode = params.backend.sessionMode ?? "always";
-  const existing = params.cliSessionId?.trim();
-  if (mode === "none") return { sessionId: undefined, isNew: !existing };
-  if (mode === "existing") return { sessionId: existing, isNew: !existing };
-  if (existing) return { sessionId: existing, isNew: false };
-  return { sessionId: crypto.randomUUID(), isNew: true };
+  if (mode === "none") return { sessionId: undefined, isNew: true };
+
+  const sessionId = params.openClawSessionId?.trim() || crypto.randomUUID();
+  // Resume if session file already exists (session was used before)
+  const isNew = params.sessionFileExists !== true;
+
+  return { sessionId, isNew };
 }
 
 export function resolvePromptInput(params: { backend: CliBackendConfig; prompt: string }): {

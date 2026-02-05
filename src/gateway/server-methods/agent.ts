@@ -9,6 +9,7 @@ import {
   type SessionEntry,
   updateSessionStore,
 } from "../../config/sessions.js";
+import { parseAgentSessionKey } from "../../sessions/session-key-utils.js";
 import { registerAgentRunContext } from "../../infra/agent-events.js";
 import {
   resolveAgentDeliveryPlan,
@@ -208,7 +209,13 @@ export const agentHandlers: GatewayRequestHandlers = {
       const { cfg, storePath, entry, canonicalKey } = loadSessionEntry(requestedSessionKey);
       cfgForAgent = cfg;
       const now = Date.now();
-      const sessionId = entry?.sessionId ?? randomUUID();
+      // For subagent sessions, use the UUID from the session key as the sessionId
+      // This ensures OpenClaw session ID = Claude CLI session ID
+      const parsed = parseAgentSessionKey(requestedSessionKey);
+      const isSubagent = parsed?.rest.toLowerCase().startsWith("subagent:");
+      const sessionId = isSubagent
+        ? parsed!.rest.slice(9) // Extract UUID after "subagent:"
+        : (entry?.sessionId ?? randomUUID());
       const labelValue = request.label?.trim() || entry?.label;
       spawnedByValue = spawnedByValue || entry?.spawnedBy;
       let inheritedGroup:

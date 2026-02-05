@@ -1,0 +1,90 @@
+{
+  "strategies": [
+    {
+      "strategy_id": "strategy_0",
+      "job_title": "Senior Python Developer",
+      "location": "Zürich",
+      "keywords": ["Python", "Django", "PostgreSQL"],
+      "category": "core",
+      "rationale": "Direct match to Python backend development expertise demonstrated at MoneyPark AG",
+      "required_keywords": ["Python", "backend"],
+      "excluded_keywords": ["frontend", "React"],
+      "seniority_range": ["mid-level", "senior"],
+      "remote_preference": "hybrid",
+      "salary_min": 130000,
+      "match_threshold": 0.7
+    },
+    {
+      "strategy_id": "strategy_1",
+      "job_title": "Lead Data Engineer",
+      "location": "Zürich",
+      "keywords": ["Python", "Airflow", "PostgreSQL", "Data Engineering"],
+      "category": "core",
+      "rationale": "Aligns with extensive experience in BI and data pipeline development",
+      "required_keywords": ["Python", "data", "pipeline"],
+      "excluded_keywords": [],
+      "seniority_range": ["senior", "lead"],
+      "remote_preference": "hybrid",
+      "salary_min": 140000,
+      "match_threshold": 0.7
+    },
+    {
+      "strategy_id": "strategy_2",
+      "job_title": "MLOps/Platform Engineer",
+      "location": "Zürich",
+      "keywords": ["Kubernetes", "ML", "Python", "CI/CD"],
+      "category": "adjacent",
+      "rationale": "Leverages Kubernetes migration experience and ML background from ETH",
+      "required_keywords": ["Kubernetes", "Python"],
+      "excluded_keywords": [],
+      "seniority_range": ["senior"],
+      "remote_preference": "hybrid",
+      "salary_min": 135000,
+      "match_threshold": 0.6
+    },
+    {
+      "strategy_id": "strategy_3",
+      "job_title": "Backend Engineer - FinTech",
+      "location": "Zürich",
+      "keywords": ["Python", "Django", "PostgreSQL", "FinTech"],
+      "category": "adjacent",
+      "rationale": "Financial services domain experience at MoneyPark and Swiss Re",
+      "required_keywords": ["Python", "backend"],
+      "excluded_keywords": [],
+      "seniority_range": ["senior"],
+      "remote_preference": "hybrid",
+      "salary_min": 140000,
+      "match_threshold": 0.6
+    },
+    {
+      "strategy_id": "strategy_4",
+      "job_title": "AI/LLM Application Developer",
+      "location": "Remote",
+      "keywords": ["Python", "AI", "LLM", "Agentic AI"],
+      "category": "growth",
+      "rationale": "Stretch opportunity in emerging AI/agentic AI domain",
+      "required_keywords": ["Python", "AI"],
+      "excluded_keywords": [],
+      "seniority_range": ["mid-level", "senior"],
+      "remote_preference": "remote",
+      "salary_min": 120000,
+      "match_threshold": 0.5
+    },
+    {
+      "strategy_id": "strategy_5",
+      "job_title": "DevOps/SRE Engineer",
+      "location": "Zürich",
+      "keywords": ["Kubernetes", "Terraform", "CI/CD", "AWS"],
+      "category": "growth",
+      "rationale": "Leverages DevOps skills from Kubernetes migration and infrastructure work",
+      "required_keywords": ["Kubernetes", "infrastructure"],
+      "excluded_keywords": [],
+      "seniority_range": ["senior"],
+      "remote_preference": "hybrid",
+      "salary_min": 125000,
+      "match_threshold": 0.5
+    }
+  ],
+  "generated_at": "2025-02-03T00:40:00Z",
+  "resume_hash": "demo123456789"
+}

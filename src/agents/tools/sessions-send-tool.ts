@@ -221,7 +221,7 @@ export function createSessionsSendTool(opts?: {
       const timeoutSeconds =
         typeof params.timeoutSeconds === "number" && Number.isFinite(params.timeoutSeconds)
           ? Math.max(0, Math.floor(params.timeoutSeconds))
-          : 30;
+          : 180;
       const timeoutMs = timeoutSeconds * 1000;
       const announceTimeoutMs = timeoutSeconds === 0 ? 30_000 : timeoutMs;
       const idempotencyKey = crypto.randomUUID();
@@ -380,10 +380,15 @@ export function createSessionsSendTool(opts?: {
       const reply = last ? extractAssistantText(last) : undefined;
       startA2AFlow(reply ?? undefined);
 
+      // When announce mode is active, the A2A flow handles everything including reply delivery.
+      // The reply should not be written to the requester's session - it belongs to the target's session
+      // and gets forwarded through the A2A mechanism.
+      const replyForRequester = delivery.mode === "announce" ? undefined : reply;
+
       return jsonResult({
         runId,
         status: "ok",
-        reply,
+        reply: replyForRequester,
         sessionKey: displayKey,
         delivery,
       });

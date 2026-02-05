@@ -1,0 +1,62 @@
+{
+  "cached_at": "2026-02-02T23:37:59.206214",
+  "jobs": [
+    {
+      "job_id": "41e0f6d6-21fb-49da-8328-6d792e1a6366",
+      "title": "ML Engineer - 1",
+      "link": "https://example.com/jobs/41e0f6d6-21fb-49da-8328-6d792e1a6366",
+      "company": "TechCorp",
+      "location": "Z\u00fcrich",
+      "workload": "full-time",
+      "publication_date": "2026-02-02T23:37:59.205734",
+      "description": "We are looking for a ML Engineer to join our team in Z\u00fcrich. Required skills: Machine Learning, TensorFlow.",
+      "tasks": "- Develop and maintain software\n- Collaborate with team\n- Write clean code",
+      "profile": "- Experience with Machine Learning\n- Bachelor's degree",
+      "seniority": "mid-level",
+      "employment_type": "permanent",
+      "remote": "hybrid",
+      "raw_salary": "CHF 100,000 - 150,000",
+      "min_salary": 100000.0,
+      "max_salary": 150000.0,
+      "currency": "CHF"
+    },
+    {
+      "job_id": "ebdbad74-8e1d-4f2e-b682-8e9b265ff583",
+      "title": "ML Engineer - 2",
+      "link": "https://example.com/jobs/ebdbad74-8e1d-4f2e-b682-8e9b265ff583",
+      "company": "StartupXYZ",
+      "location": "Z\u00fcrich",
+      "workload": "full-time",
+      "publication_date": "2026-02-01T23:37:59.205757",
+      "description": "We are looking for a ML Engineer to join our team in Z\u00fcrich. Required skills: Machine Learning, TensorFlow.",
+      "tasks": "- Develop and maintain software\n- Collaborate with team\n- Write clean code",
+      "profile": "- Experience with Machine Learning\n- Bachelor's degree",
+      "seniority": "mid-level",
+      "employment_type": "permanent",
+      "remote": "hybrid",
+      "raw_salary": "CHF 100,000 - 150,000",
+      "min_salary": 100000.0,
+      "max_salary": 150000.0,
+      "currency": "CHF"
+    },
+    {
+      "job_id": "2da71dae-e15c-4d4b-a093-7639f29ccf93",
+      "title": "ML Engineer - 3",
+      "link": "https://example.com/jobs/2da71dae-e15c-4d4b-a093-7639f29ccf93",
+      "company": "EnterpriseAB",
+      "location": "Z\u00fcrich",
+      "workload": "full-time",
+      "publication_date": "2026-01-31T23:37:59.205771",
+      "description": "We are looking for a ML Engineer to join our team in Z\u00fcrich. Required skills: Machine Learning, TensorFlow.",
+      "tasks": "- Develop and maintain software\n- Collaborate with team\n- Write clean code",
+      "profile": "- Experience with Machine Learning\n- Bachelor's degree",
+      "seniority": "mid-level",
+      "employment_type": "permanent",
+      "remote": "hybrid",
+      "raw_salary": "CHF 100,000 - 150,000",
+      "min_salary": 100000.0,
+      "max_salary": 150000.0,
+      "currency": "CHF"
+    }
+  ]
+}

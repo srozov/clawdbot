@@ -1,0 +1,16 @@
+{
+  "applications": [
+    {
+      "directory": "Google_Senior_Engineer",
+      "company": "Google",
+      "title": "Senior Engineer",
+      "status": "Generated"
+    },
+    {
+      "directory": "Meta_Software_Engineer",
+      "company": "Meta",
+      "title": "Software Engineer",
+      "status": "Generated"
+    }
+  ]
+}
