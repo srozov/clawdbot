@@ -64,66 +64,6 @@ workspace-trader/stock-picking-agency          → /home/agi01/stock-picking-age
 ---
 
 
-## Claude Code Agent (via CLI Backend)
-
-Claude Code is a **native OpenClaw agent** powered by the CLI backend. It runs as a
-full implementation agent with plan mode support. Conductor invokes it via internal
-`runClaudeCliAgent()` API, not via shell commands.
-
-### Workflow
-
-Claude Code supports a **plan → execute** workflow:
-
-1. **Plan mode** (default) - Read-only, outputs implementation plan
-2. **Execute mode** - Can modify files after Conductor approval
-
-```typescript
-// Plan mode (default) - Conductor reviews plan
-await runClaudeCliAgent({
-  prompt: taskDescription,
-  mode: "plan",  // or omit (plan is default)
-});
-
-// Execute mode - After approval, Claude Code implements
-await runClaudeCliAgent({
-  prompt: approvalMessage,
-  cliSessionId: previousSessionId,
-  mode: "auto",  // Enables file modification
-});
-```
-
-### Configuration
-
-Default CLI backend config (no override needed):
-
-```json
-{
-  "command": "claude",
-  "args": ["-p", "--output-format", "json", "--permission-mode", "plan"],
-  "executeArgs": ["-p", "--output-format", "json", "--permission-mode", "auto"],
-  "allowedTools": ["default"],
-  "sessionArg": "--session-id",
-  "sessionMode": "always"
-}
-```
-
-### Key Features
-
-- **Plan mode**: `--permission-mode plan` - Read-only, outputs plan as JSON
-- **Execute mode**: `--permission-mode auto` - Full file modification capabilities
-- **Session continuity**: `--session-id` maintains conversation context
-- **Full tool access**: Uses Claude Code's default tool set (bash, read, edit, write, etc.)
-
-### Session Management
-
-- OpenClaw manages session IDs automatically
-- Sessions persist via `--session-id` flag
-- Conductor owns the session lifecycle
-- No manual session file tracking needed
-
----
-
-
 ## Agent Responsibilities
 
 ### Main
@@ -133,15 +73,13 @@ Default CLI backend config (no override needed):
 ### Conductor
 - Orchestrates all projects. Owns `CONTEXT.md` in each project dir.
 - Updates CONTEXT.md when: spawning agents, milestones complete, blockers surface.
-- Spawns Claude Code for implementation tasks (plan → execute workflow).
+- Spawns Claude Code for implementation tasks.
 - Spawns domain agents for requirements/validation.
 - Commits changes after Claude Code finishes.
 
 ### Claude Code
 - Full implementation agent. Works in project repos.
-- Receives tasks from Conductor, executes plan, returns results.
-- Supports plan mode (read-only) and execute mode (full modification).
-- Can read/write files, run commands, research, debug.
+- Receives tasks from Conductor, implements, returns results.
 - Does not own project context — Conductor owns CONTEXT.md.
 
 ### Career Coach (job-application-agency only)
@@ -168,7 +106,7 @@ Default CLI backend config (no override needed):
 ```
 Main
  └─ Conductor
-      ├─ Claude Code (via CLI backend, plan→execute workflow)
+      ├─ Claude Code
       ├─ Career Coach
       ├─ Trader
       └─ KB
@@ -193,5 +131,3 @@ you can't spawn it — route through Conductor.
     `STATUS_REPORT.md` in `workspace-*/`. Those go in the project dir or get deleted.
 7. **BOOTSTRAP.md is a one-time script.** Delete it after first session. It should not
     persist.
-8. **Claude Code is a full agent.** Conductor spawns via OpenClaw CLI backend with
-    plan→execute mode. Use plan mode for review, execute mode after approval.
