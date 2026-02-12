@@ -381,9 +381,11 @@ export function createSessionsSendTool(opts?: {
       startA2AFlow(reply ?? undefined);
 
       // When announce mode is active, the A2A flow handles everything including reply delivery.
-      // The reply should not be written to the requester's session - it belongs to the target's session
-      // and gets forwarded through the A2A mechanism.
-      const replyForRequester = delivery.mode === "announce" ? undefined : reply;
+      // Exception: subagent session targets have no external channel, so the A2A announce
+      // won't fire externally — include the reply directly so the requester doesn't need
+      // a separate sessions_history call.
+      const replyForRequester =
+        delivery.mode === "announce" && !isSubagentSessionKey(resolvedKey) ? undefined : reply;
 
       return jsonResult({
         runId,

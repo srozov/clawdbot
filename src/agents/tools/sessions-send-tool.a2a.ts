@@ -157,6 +157,45 @@ export async function runSessionsSendA2AFlow(params: {
         });
       }
     }
+
+    // Fallback for non-blocking sends to subagent sessions: no external channel can be
+    // resolved from a subagent key, so trigger the requester agent directly — mirroring
+    // how sessions_spawn announces work. Blocking sends don't need this because the reply
+    // is already returned in the sessions_send tool result.
+    if (!announceTarget && params.waitRunId && params.requesterSessionKey && latestReply?.trim()) {
+      const requesterTarget = await resolveAnnounceTarget({
+        sessionKey: params.requesterSessionKey,
+        displayKey: params.requesterSessionKey,
+      });
+      if (requesterTarget) {
+        try {
+          await callGateway({
+            method: "agent",
+            params: {
+              sessionKey: params.requesterSessionKey,
+              message: latestReply.trim(),
+              deliver: true,
+              channel: requesterTarget.channel,
+              accountId: requesterTarget.accountId,
+              to: requesterTarget.to,
+              threadId:
+                requesterTarget.threadId != null && requesterTarget.threadId !== ""
+                  ? requesterTarget.threadId
+                  : undefined,
+              idempotencyKey: crypto.randomUUID(),
+            },
+            expectFinal: true,
+            timeoutMs: params.announceTimeoutMs,
+          });
+        } catch (err) {
+          log.warn("sessions_send requester fallback delivery failed", {
+            runId: runContextId,
+            sessionKey: params.requesterSessionKey,
+            error: formatErrorMessage(err),
+          });
+        }
+      }
+    }
   } catch (err) {
     log.warn("sessions_send announce flow failed", {
       runId: runContextId,
