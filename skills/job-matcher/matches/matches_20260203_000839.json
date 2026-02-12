@@ -1,0 +1,378 @@
+{
+  "report_id": "20260203_000839",
+  "generated_at": "2026-02-03T00:08:39.115148Z",
+  "strategies_analyzed": 3,
+  "jobs_analyzed": 5,
+  "total_matches": 9,
+  "results": [
+    {
+      "strategy_id": "python_senior",
+      "strategy_title": "Senior Python Developer",
+      "strategy_category": "core_expertise",
+      "total_jobs_analyzed": 5,
+      "total_matches": 3,
+      "matches": [
+        {
+          "job_id": "4ff64bd0-daa8-43f1-8fe6-aacd4690d4c0",
+          "strategy_id": "python_senior",
+          "job_title": "Senior Python Developer - 5",
+          "job_link": "https://example.com/jobs/4ff64bd0-daa8-43f1-8fe6-aacd4690d4c0",
+          "company": "DataDriven Inc",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.775,
+          "score_breakdown": {
+            "keyword_score": 1.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.775
+          },
+          "reasoning": {
+            "keyword_match": "All 3 required keywords found: Python, Django, PostgreSQL",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Strong keyword match",
+              "Perfect location match"
+            ],
+            "concerns": []
+          },
+          "matched_keywords": [
+            "Python",
+            "Django",
+            "PostgreSQL"
+          ],
+          "missing_keywords": []
+        },
+        {
+          "job_id": "54c4da81-7427-4a82-b2d6-87bddeb33b79",
+          "strategy_id": "python_senior",
+          "job_title": "Senior Python Developer - 2",
+          "job_link": "https://example.com/jobs/54c4da81-7427-4a82-b2d6-87bddeb33b79",
+          "company": "StartupXYZ",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.775,
+          "score_breakdown": {
+            "keyword_score": 1.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.775
+          },
+          "reasoning": {
+            "keyword_match": "All 3 required keywords found: Python, Django, PostgreSQL",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Strong keyword match",
+              "Perfect location match"
+            ],
+            "concerns": []
+          },
+          "matched_keywords": [
+            "Python",
+            "Django",
+            "PostgreSQL"
+          ],
+          "missing_keywords": []
+        },
+        {
+          "job_id": "d3b6459c-4df6-49fd-8920-9bda80494dd0",
+          "strategy_id": "python_senior",
+          "job_title": "Senior Python Developer - 1",
+          "job_link": "https://example.com/jobs/d3b6459c-4df6-49fd-8920-9bda80494dd0",
+          "company": "TechCorp",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.775,
+          "score_breakdown": {
+            "keyword_score": 1.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.775
+          },
+          "reasoning": {
+            "keyword_match": "All 3 required keywords found: Python, Django, PostgreSQL",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Strong keyword match",
+              "Perfect location match"
+            ],
+            "concerns": []
+          },
+          "matched_keywords": [
+            "Python",
+            "Django",
+            "PostgreSQL"
+          ],
+          "missing_keywords": []
+        }
+      ],
+      "generated_at": "2026-02-03T00:08:39.114631Z"
+    },
+    {
+      "strategy_id": "ml_engineer",
+      "strategy_title": "ML Engineer",
+      "strategy_category": "adjacent_roles",
+      "total_jobs_analyzed": 5,
+      "total_matches": 3,
+      "matches": [
+        {
+          "job_id": "4ff64bd0-daa8-43f1-8fe6-aacd4690d4c0",
+          "strategy_id": "ml_engineer",
+          "job_title": "Senior Python Developer - 5",
+          "job_link": "https://example.com/jobs/4ff64bd0-daa8-43f1-8fe6-aacd4690d4c0",
+          "company": "DataDriven Inc",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.42500000000000004,
+          "score_breakdown": {
+            "keyword_score": 0.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.42500000000000004
+          },
+          "reasoning": {
+            "keyword_match": "All required keywords missing: Machine Learning, TensorFlow",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Perfect location match"
+            ],
+            "concerns": [
+              "Limited keyword overlap",
+              "Missing required keywords: Machine Learning, TensorFlow"
+            ]
+          },
+          "matched_keywords": [],
+          "missing_keywords": [
+            "Machine Learning",
+            "TensorFlow"
+          ]
+        },
+        {
+          "job_id": "54c4da81-7427-4a82-b2d6-87bddeb33b79",
+          "strategy_id": "ml_engineer",
+          "job_title": "Senior Python Developer - 2",
+          "job_link": "https://example.com/jobs/54c4da81-7427-4a82-b2d6-87bddeb33b79",
+          "company": "StartupXYZ",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.42500000000000004,
+          "score_breakdown": {
+            "keyword_score": 0.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.42500000000000004
+          },
+          "reasoning": {
+            "keyword_match": "All required keywords missing: Machine Learning, TensorFlow",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Perfect location match"
+            ],
+            "concerns": [
+              "Limited keyword overlap",
+              "Missing required keywords: Machine Learning, TensorFlow"
+            ]
+          },
+          "matched_keywords": [],
+          "missing_keywords": [
+            "Machine Learning",
+            "TensorFlow"
+          ]
+        },
+        {
+          "job_id": "d3b6459c-4df6-49fd-8920-9bda80494dd0",
+          "strategy_id": "ml_engineer",
+          "job_title": "Senior Python Developer - 1",
+          "job_link": "https://example.com/jobs/d3b6459c-4df6-49fd-8920-9bda80494dd0",
+          "company": "TechCorp",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.42500000000000004,
+          "score_breakdown": {
+            "keyword_score": 0.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.42500000000000004
+          },
+          "reasoning": {
+            "keyword_match": "All required keywords missing: Machine Learning, TensorFlow",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Perfect location match"
+            ],
+            "concerns": [
+              "Limited keyword overlap",
+              "Missing required keywords: Machine Learning, TensorFlow"
+            ]
+          },
+          "matched_keywords": [],
+          "missing_keywords": [
+            "Machine Learning",
+            "TensorFlow"
+          ]
+        }
+      ],
+      "generated_at": "2026-02-03T00:08:39.114890Z"
+    },
+    {
+      "strategy_id": "devops_eng",
+      "strategy_title": "DevOps Engineer",
+      "strategy_category": "growth_opportunities",
+      "total_jobs_analyzed": 5,
+      "total_matches": 3,
+      "matches": [
+        {
+          "job_id": "4ff64bd0-daa8-43f1-8fe6-aacd4690d4c0",
+          "strategy_id": "devops_eng",
+          "job_title": "Senior Python Developer - 5",
+          "job_link": "https://example.com/jobs/4ff64bd0-daa8-43f1-8fe6-aacd4690d4c0",
+          "company": "DataDriven Inc",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.42500000000000004,
+          "score_breakdown": {
+            "keyword_score": 0.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.42500000000000004
+          },
+          "reasoning": {
+            "keyword_match": "All required keywords missing: AWS, Kubernetes, Docker",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Perfect location match"
+            ],
+            "concerns": [
+              "Limited keyword overlap",
+              "Missing required keywords: AWS, Kubernetes, Docker"
+            ]
+          },
+          "matched_keywords": [],
+          "missing_keywords": [
+            "AWS",
+            "Kubernetes",
+            "Docker"
+          ]
+        },
+        {
+          "job_id": "54c4da81-7427-4a82-b2d6-87bddeb33b79",
+          "strategy_id": "devops_eng",
+          "job_title": "Senior Python Developer - 2",
+          "job_link": "https://example.com/jobs/54c4da81-7427-4a82-b2d6-87bddeb33b79",
+          "company": "StartupXYZ",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.42500000000000004,
+          "score_breakdown": {
+            "keyword_score": 0.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.42500000000000004
+          },
+          "reasoning": {
+            "keyword_match": "All required keywords missing: AWS, Kubernetes, Docker",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Perfect location match"
+            ],
+            "concerns": [
+              "Limited keyword overlap",
+              "Missing required keywords: AWS, Kubernetes, Docker"
+            ]
+          },
+          "matched_keywords": [],
+          "missing_keywords": [
+            "AWS",
+            "Kubernetes",
+            "Docker"
+          ]
+        },
+        {
+          "job_id": "d3b6459c-4df6-49fd-8920-9bda80494dd0",
+          "strategy_id": "devops_eng",
+          "job_title": "Senior Python Developer - 1",
+          "job_link": "https://example.com/jobs/d3b6459c-4df6-49fd-8920-9bda80494dd0",
+          "company": "TechCorp",
+          "job_location": "Zürich",
+          "description": "We are looking for a Senior Python Developer to join our team in Zürich. Required skills: Python, Django, PostgreSQL.",
+          "score": 0.42500000000000004,
+          "score_breakdown": {
+            "keyword_score": 0.0,
+            "location_score": 1.0,
+            "seniority_score": 0.5,
+            "remote_score": 0.5,
+            "salary_score": 0.5,
+            "overall_score": 0.42500000000000004
+          },
+          "reasoning": {
+            "keyword_match": "All required keywords missing: AWS, Kubernetes, Docker",
+            "location_match": "Location matches: Zürich",
+            "seniority_match": "No seniority preference specified.",
+            "remote_match": "No remote work preference specified.",
+            "salary_match": "Job salary: CHF 100,000+",
+            "strengths": [
+              "Perfect location match"
+            ],
+            "concerns": [
+              "Limited keyword overlap",
+              "Missing required keywords: AWS, Kubernetes, Docker"
+            ]
+          },
+          "matched_keywords": [],
+          "missing_keywords": [
+            "AWS",
+            "Kubernetes",
+            "Docker"
+          ]
+        }
+      ],
+      "generated_at": "2026-02-03T00:08:39.115109Z"
+    }
+  ],
+  "score_distribution": {
+    "excellent": 0,
+    "good": 3,
+    "moderate": 6,
+    "poor": 0
+  }
+}

@@ -78,13 +78,13 @@ describe("runClaudeCliAgent", () => {
       model: "opus",
       timeoutMs: 1_000,
       runId: "run-2",
-      claudeSessionId: "c9d7b831-1c31-4d22-80b9-1e50ca207d4b",
+      useResume: true,
     });
 
     expect(runCommandWithTimeoutMock).toHaveBeenCalledTimes(1);
     const argv = runCommandWithTimeoutMock.mock.calls[0]?.[0] as string[];
     expect(argv).toContain("--resume");
-    expect(argv).toContain("c9d7b831-1c31-4d22-80b9-1e50ca207d4b");
+    expect(argv).toContain("openclaw-session");
     expect(argv).toContain("hi");
   });
 

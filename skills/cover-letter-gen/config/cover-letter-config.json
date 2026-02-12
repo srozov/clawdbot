@@ -1,0 +1,8 @@
+{
+    "llm_model": "anthropic/claude-sonnet-4",
+    "style": "adaptive",
+    "enable_company_research": true,
+    "company_cache_ttl_days": 7,
+    "max_length_words": 350,
+    "min_match_score": 0.6
+}

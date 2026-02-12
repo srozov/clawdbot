@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -342,18 +341,6 @@ export function resolveSystemPromptUsage(params: {
   if (when === "first" && !params.isNewSession) return null;
   if (!params.backend.systemPromptArg?.trim()) return null;
   return systemPrompt;
-}
-
-export function resolveSessionIdToSend(params: {
-  backend: CliBackendConfig;
-  cliSessionId?: string;
-}): { sessionId?: string; isNew: boolean } {
-  const mode = params.backend.sessionMode ?? "always";
-  const existing = params.cliSessionId?.trim();
-  if (mode === "none") return { sessionId: undefined, isNew: !existing };
-  if (mode === "existing") return { sessionId: existing, isNew: !existing };
-  if (existing) return { sessionId: existing, isNew: false };
-  return { sessionId: crypto.randomUUID(), isNew: true };
 }
 
 export function resolvePromptInput(params: { backend: CliBackendConfig; prompt: string }): {

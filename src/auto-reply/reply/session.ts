@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { CURRENT_SESSION_VERSION, SessionManager } from "@mariozechner/pi-coding-agent";
-import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import type { TtsAutoMode } from "../../config/types.tts.js";
 import {
@@ -25,7 +24,7 @@ import {
   type SessionScope,
   updateSessionStore,
 } from "../../config/sessions.js";
-import { normalizeMainKey } from "../../routing/session-key.js";
+import { normalizeMainKey, resolveAgentIdFromSessionKey } from "../../routing/session-key.js";
 import { resolveCommandAuthorization } from "../command-auth.js";
 import type { MsgContext, TemplateContext } from "../templating.js";
 import { normalizeChatType } from "../../channels/chat-type.js";
@@ -104,19 +103,22 @@ export async function initSessionState(params: {
       : ctx;
   const sessionCfg = cfg.session;
   const mainKey = normalizeMainKey(sessionCfg?.mainKey);
-  const agentId = resolveSessionAgentId({
-    sessionKey: sessionCtxForState.SessionKey,
-    config: cfg,
-  });
   const groupResolution = resolveGroupSessionKey(sessionCtxForState) ?? undefined;
   const resetTriggers = sessionCfg?.resetTriggers?.length
     ? sessionCfg.resetTriggers
     : DEFAULT_RESET_TRIGGERS;
   const sessionScope = sessionCfg?.scope ?? "per-sender";
-  const storePath = resolveStorePath(sessionCfg?.store, { agentId });
 
+  // IMPORTANT: Resolve sessionKey EARLY so we can derive the correct agentId.
+  // This ensures the session store is loaded from the correct agent's directory,
+  // and the session file is created in the correct agent's directory.
+  const sessionKey = resolveSessionKey(sessionScope, sessionCtxForState, mainKey, cfg);
+
+  // Extract agentId from the resolved sessionKey (which includes agent routing for groups).
+  const agentId = resolveAgentIdFromSessionKey(sessionKey);
+
+  const storePath = resolveStorePath(sessionCfg?.store, { agentId });
   const sessionStore: Record<string, SessionEntry> = loadSessionStore(storePath);
-  let sessionKey: string | undefined;
   let sessionEntry: SessionEntry;
 
   let sessionId: string | undefined;
@@ -186,7 +188,6 @@ export async function initSessionState(params: {
     }
   }
 
-  sessionKey = resolveSessionKey(sessionScope, sessionCtxForState, mainKey);
   const entry = sessionStore[sessionKey];
   const previousSessionEntry = resetTriggered && entry ? { ...entry } : undefined;
   const now = Date.now();

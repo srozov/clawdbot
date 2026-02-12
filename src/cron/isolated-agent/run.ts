@@ -6,7 +6,6 @@ import {
   resolveDefaultAgentId,
 } from "../../agents/agent-scope.js";
 import { runCliAgent } from "../../agents/cli-runner.js";
-import { getCliSessionId, setCliSessionId } from "../../agents/cli-session.js";
 import { lookupContextTokens } from "../../agents/context.js";
 import { DEFAULT_CONTEXT_TOKENS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "../../agents/defaults.js";
 import { loadModelCatalog } from "../../agents/model-catalog.js";
@@ -39,7 +38,11 @@ import {
 } from "../../auto-reply/thinking.js";
 import { createOutboundSendDeps, type CliDeps } from "../../cli/outbound-send-deps.js";
 import type { OpenClawConfig } from "../../config/config.js";
-import { resolveSessionTranscriptPath, updateSessionStore } from "../../config/sessions.js";
+import {
+  appendCliRunToSessionTranscript,
+  resolveSessionTranscriptPath,
+  updateSessionStore,
+} from "../../config/sessions.js";
 import type { AgentDefaultsConfig } from "../../config/types.js";
 import { registerAgentRunContext } from "../../infra/agent-events.js";
 import { deliverOutboundPayloads } from "../../infra/outbound/deliver.js";
@@ -336,7 +339,6 @@ export async function runCronIsolatedAgentTurn(params: {
       fallbacksOverride: resolveAgentModelFallbacksOverride(params.cfg, agentId),
       run: (providerOverride, modelOverride) => {
         if (isCliProvider(providerOverride, cfgWithAgentDefaults)) {
-          const cliSessionId = getCliSessionId(cronSession.sessionEntry, providerOverride);
           return runCliAgent({
             sessionId: cronSession.sessionEntry.sessionId,
             sessionKey: agentSessionKey,
@@ -349,7 +351,7 @@ export async function runCronIsolatedAgentTurn(params: {
             thinkLevel,
             timeoutMs,
             runId: cronSession.sessionEntry.sessionId,
-            cliSessionId,
+            useResume: false,
           });
         }
         return runEmbeddedPiAgent({
@@ -392,12 +394,7 @@ export async function runCronIsolatedAgentTurn(params: {
     cronSession.sessionEntry.modelProvider = providerUsed;
     cronSession.sessionEntry.model = modelUsed;
     cronSession.sessionEntry.contextTokens = contextTokens;
-    if (isCliProvider(providerUsed, cfgWithAgentDefaults)) {
-      const cliSessionId = runResult.meta.agentMeta?.sessionId?.trim();
-      if (cliSessionId) {
-        setCliSessionId(cronSession.sessionEntry, providerUsed, cliSessionId);
-      }
-    }
+    // cliSessionId is now always equal to sessionId (unified IDs)
     if (hasNonzeroUsage(usage)) {
       const input = usage.input ?? 0;
       const output = usage.output ?? 0;
@@ -411,6 +408,29 @@ export async function runCronIsolatedAgentTurn(params: {
     await updateSessionStore(cronSession.storePath, (store) => {
       store[agentSessionKey] = cronSession.sessionEntry;
     });
+
+    // Persist CLI agent transcript so it shows in web UI / sessions_history.
+    if (isCliProvider(providerUsed, cfgWithAgentDefaults)) {
+      const responseText = payloads
+        .map((p) => p.text)
+        .filter(Boolean)
+        .join("\n\n");
+      if (responseText.trim()) {
+        const transcriptFile = resolveSessionTranscriptPath(
+          cronSession.sessionEntry.sessionId,
+          agentId,
+        );
+        await appendCliRunToSessionTranscript({
+          sessionFile: transcriptFile,
+          sessionId: cronSession.sessionEntry.sessionId,
+          prompt: commandBody,
+          responseText,
+          provider: providerUsed,
+          model: modelUsed,
+          usage: runResult.meta.agentMeta?.usage,
+        }).catch(() => {});
+      }
+    }
   }
   const firstText = payloads[0]?.text ?? "";
   const summary = pickSummaryFromPayloads(payloads) ?? pickSummaryFromOutput(firstText);

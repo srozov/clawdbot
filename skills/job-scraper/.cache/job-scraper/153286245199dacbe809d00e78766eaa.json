@@ -1,0 +1,43 @@
+{
+  "cached_at": "2026-02-02T23:37:59.206929",
+  "jobs": [
+    {
+      "job_id": "c937afb4-468c-444c-b41d-9de5b098220f",
+      "title": "DevOps Engineer - 1",
+      "link": "https://example.com/jobs/c937afb4-468c-444c-b41d-9de5b098220f",
+      "company": "TechCorp",
+      "location": "Z\u00fcrich",
+      "workload": "full-time",
+      "publication_date": "2026-02-02T23:37:59.206562",
+      "description": "We are looking for a DevOps Engineer to join our team in Z\u00fcrich. Required skills: AWS, Kubernetes, Docker.",
+      "tasks": "- Develop and maintain software\n- Collaborate with team\n- Write clean code",
+      "profile": "- Experience with AWS\n- Bachelor's degree",
+      "seniority": "mid-level",
+      "employment_type": "permanent",
+      "remote": "hybrid",
+      "raw_salary": "CHF 100,000 - 150,000",
+      "min_salary": 100000.0,
+      "max_salary": 150000.0,
+      "currency": "CHF"
+    },
+    {
+      "job_id": "c76eccde-3298-4bf7-b62e-307f62bf3104",
+      "title": "DevOps Engineer - 2",
+      "link": "https://example.com/jobs/c76eccde-3298-4bf7-b62e-307f62bf3104",
+      "company": "StartupXYZ",
+      "location": "Z\u00fcrich",
+      "workload": "full-time",
+      "publication_date": "2026-02-01T23:37:59.206583",
+      "description": "We are looking for a DevOps Engineer to join our team in Z\u00fcrich. Required skills: AWS, Kubernetes, Docker.",
+      "tasks": "- Develop and maintain software\n- Collaborate with team\n- Write clean code",
+      "profile": "- Experience with AWS\n- Bachelor's degree",
+      "seniority": "mid-level",
+      "employment_type": "permanent",
+      "remote": "hybrid",
+      "raw_salary": "CHF 100,000 - 150,000",
+      "min_salary": 100000.0,
+      "max_salary": 150000.0,
+      "currency": "CHF"
+    }
+  ]
+}

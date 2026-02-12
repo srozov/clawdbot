@@ -1,0 +1,8 @@
+{
+  "database_id": "your-notion-database-id",
+  "oauth_enabled": true,
+  "sync_mode": "incremental",
+  "default_status": "Not Applied",
+  "rate_limit_delay": 0.35,
+  "max_retries": 3
+}

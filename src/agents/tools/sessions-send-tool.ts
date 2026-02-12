@@ -221,7 +221,7 @@ export function createSessionsSendTool(opts?: {
       const timeoutSeconds =
         typeof params.timeoutSeconds === "number" && Number.isFinite(params.timeoutSeconds)
           ? Math.max(0, Math.floor(params.timeoutSeconds))
-          : 30;
+          : 180;
       const timeoutMs = timeoutSeconds * 1000;
       const announceTimeoutMs = timeoutSeconds === 0 ? 30_000 : timeoutMs;
       const idempotencyKey = crypto.randomUUID();
@@ -380,10 +380,17 @@ export function createSessionsSendTool(opts?: {
       const reply = last ? extractAssistantText(last) : undefined;
       startA2AFlow(reply ?? undefined);
 
+      // When announce mode is active, the A2A flow handles everything including reply delivery.
+      // Exception: subagent session targets have no external channel, so the A2A announce
+      // won't fire externally — include the reply directly so the requester doesn't need
+      // a separate sessions_history call.
+      const replyForRequester =
+        delivery.mode === "announce" && !isSubagentSessionKey(resolvedKey) ? undefined : reply;
+
       return jsonResult({
         runId,
         status: "ok",
-        reply,
+        reply: replyForRequester,
         sessionKey: displayKey,
         delivery,
       });

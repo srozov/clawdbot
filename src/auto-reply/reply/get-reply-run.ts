@@ -306,7 +306,7 @@ export async function runPreparedReply(
     }
   }
   const sessionIdFinal = sessionId ?? crypto.randomUUID();
-  const sessionFile = resolveSessionFilePath(sessionIdFinal, sessionEntry);
+  const sessionFile = resolveSessionFilePath(sessionIdFinal, sessionEntry, { agentId });
   const queueBodyBase = [threadStarterNote, baseBodyFinal].filter(Boolean).join("\n\n");
   const queueMessageId = sessionCtx.MessageSid?.trim();
   const queueMessageIdHint = queueMessageId ? `[message_id: ${queueMessageId}]` : "";
@@ -397,6 +397,7 @@ export async function runPreparedReply(
       ownerNumbers: command.ownerList.length > 0 ? command.ownerList : undefined,
       extraSystemPrompt: extraSystemPrompt || undefined,
       ...(isReasoningTagProvider(provider) ? { enforceFinalTag: true } : {}),
+      useResume: !isNewSession,
     },
   };
 

@@ -1,0 +1,3 @@
+# Cache directory for cover letter generation
+# This file prevents the directory from being empty for git
+# Files are generated at runtime

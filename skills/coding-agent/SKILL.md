@@ -4,160 +4,191 @@ description: Run Codex CLI, Claude Code, OpenCode, or Pi Coding Agent via backgr
 metadata: {"openclaw":{"emoji":"🧩","requires":{"anyBins":["claude","codex","opencode","pi"]}}}
 ---
 
-# Coding Agent (bash-first)
+# Coding Agent
 
-Use **bash** (with optional background mode) for all coding agent work. Simple and effective.
+**Note for Claude Code:** For Claude Code, the **OpenClaw CLI backend** is the preferred integration. Use `openclaw agent --message "..." --model claude-cli/opus` instead of this skill for structured plan→execute workflows. This skill is useful for Codex, OpenCode, Pi, or advanced Claude Code use cases (background sessions, custom PTY handling).
 
-## ⚠️ PTY Mode Required!
+## Claude Code via CLI Backend (Recommended for Plan→Execute)
 
-Coding agents (Codex, Claude Code, Pi) are **interactive terminal applications** that need a pseudo-terminal (PTY) to work correctly. Without PTY, you'll get broken output, missing colors, or the agent may hang.
+For Claude Code, use OpenClaw's native CLI backend:
 
-**Always use `pty:true`** when running coding agents:
+```bash
+openclaw agent --message "<task>" --model claude-cli/opus
+```
+
+This provides:
+- Plan mode (`--permission-mode plan`) for read-only planning
+- Execute mode (`--permission-mode auto`) for full implementation
+- Automatic session management
+- JSON output parsing
+
+## Claude Code via PTY (Legacy/Bash)
+
+For advanced use cases, use **bash** with `pty:true`:
 
 ```bash
 # ✅ Correct - with PTY
-bash pty:true command:"codex exec 'Your prompt'"
+bash pty:true workdir:/home/agi01/<project> command:"claude -p '<task>'"
 
 # ❌ Wrong - no PTY, agent may break
-bash command:"codex exec 'Your prompt'"
+bash command:"claude -p '<task>'"
 ```
 
-### Bash Tool Parameters
+### Bash Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `command` | string | The shell command to run |
-| `pty` | boolean | **Use for coding agents!** Allocates a pseudo-terminal for interactive CLIs |
-| `workdir` | string | Working directory (agent sees only this folder's context) |
-| `background` | boolean | Run in background, returns sessionId for monitoring |
-| `timeout` | number | Timeout in seconds (kills process on expiry) |
-| `elevated` | boolean | Run on host instead of sandbox (if allowed) |
+| `command` | string | Shell command to run |
+| `pty` | boolean | **Required for coding agents** |
+| `workdir` | string | Agent sees only this directory |
+| `background` | boolean | Run in background, returns sessionId |
+| `timeout` | number | Timeout in seconds |
+| `elevated` | boolean | Run on host (if allowed) |
 
-### Process Tool Actions (for background sessions)
+### Process Actions (for background sessions)
 
 | Action | Description |
 |--------|-------------|
-| `list` | List all running/recent sessions |
-| `poll` | Check if session is still running |
-| `log` | Get session output (with optional offset/limit) |
+| `list` | List running/recent sessions |
+| `poll` | Check if session is running |
+| `log` | Get session output |
 | `write` | Send raw data to stdin |
-| `submit` | Send data + newline (like typing and pressing Enter) |
-| `send-keys` | Send key tokens or hex bytes |
-| `paste` | Paste text (with optional bracketed mode) |
-| `kill` | Terminate the session |
+| `submit` | Send data + newline |
+| `send-keys` | Send key tokens |
+| `paste` | Paste text with optional bracketed mode |
+| `kill` | Terminate session |
 
 ---
 
-## Quick Start: One-Shot Tasks
+## Claude Code (Recommended)
 
-For quick prompts/chats, create a temp git repo and run:
+Claude Code is the **primary implementation agent**. It is a **tool**, not a peer agent. You own the session, review plans, and commit results.
 
-```bash
-# Quick chat (Codex needs a git repo!)
-SCRATCH=$(mktemp -d) && cd $SCRATCH && git init && codex exec "Your prompt here"
+### Workflow Overview
 
-# Or in a real project - with PTY!
-bash pty:true workdir:~/Projects/myproject command:"codex exec 'Add error handling to the API calls'"
+```
+Spawn plan mode → Review plan → Approve/correct → Agent implements → You commit
 ```
 
-**Why git init?** Codex refuses to run outside a trusted git directory. Creating a temp repo solves this for scratch work.
-
----
-
-## The Pattern: workdir + background + pty
-
-For longer tasks, use background mode with PTY:
+### 1. Spawn Plan Mode
 
 ```bash
-# Start agent in target directory (with PTY!)
-bash pty:true workdir:~/project background:true command:"codex exec --full-auto 'Build a snake game'"
-# Returns sessionId for tracking
-
-# Monitor progress
-process action:log sessionId:XXX
-
-# Check if done
-process action:poll sessionId:XXX
-
-# Send input (if agent asks a question)
-process action:write sessionId:XXX data:"y"
-
-# Submit with Enter (like typing "yes" and pressing Enter)
-process action:submit sessionId:XXX data:"yes"
-
-# Kill if needed
-process action:kill sessionId:XXX
+bash pty:true background:true workdir:/home/agi01/<project> command:"claude --permission-mode plan '<task description>'"
 ```
 
-**Why workdir matters:** Agent wakes up in a focused directory, doesn't wander off reading unrelated files (like your soul.md 😅).
+Returns: `{"sessionId":"<id>", ...}`
+
+**Store the sessionId in your context.** You own this session.
+
+### 2. Review Plan
+
+```bash
+read path:~/.claude/sessions/<sessionId>.jsonl
+```
+
+Read the session transcript to review the plan.
+
+### 3. Submit Corrections or Approve
+
+```bash
+bash pty:true background:true command:"claude --session-id <sessionId> --permission-mode auto '<corrections or proceed>'"
+```
+
+| Mode | Effect |
+|------|--------|
+| `--permission-mode plan` | Read-only, cannot modify files |
+| `--permission-mode auto` | Can read/edit within workdir |
+| `--permission-mode all` | Full machine access |
+
+### 4. Monitor Execution
+
+```bash
+read path:~/.claude/sessions/<sessionId>.jsonl
+```
+
+Can interject mid-execution:
+```bash
+bash command:"claude --session-id <sessionId> '<interjection>'"
+```
+
+### 5. Review Changes
+
+```bash
+bash command:"git diff --stat" workdir:/home/agi01/<project>
+bash command:"git diff" workdir:/home/agi01/<project>
+```
+
+### 6. Commit Manually
+
+```bash
+bash command:"git add . && git commit -m '<message>'" workdir:/home/agi01/<project>
+```
+
+**Claude Code cannot commit** — you review and commit.
+
+### Session Management
+
+| Action | Command |
+|--------|---------|
+| List sessions | `ls ~/.claude/sessions/` |
+| Read transcript | `read path:~/.claude/sessions/<sessionId>.jsonl` |
+| Resume session | `claude --session-id <id> '<instructions>'` |
+| Kill session | `bash command:"pkill -f 'claude.*session-id <sessionId>'"` |
+
+### One-Shot (No Plan Mode)
+
+```bash
+bash pty:true workdir:/home/agi01/<project> command:"claude -p '<task>'"
+```
+
+### Model Selection
+
+```bash
+--model sonnet    # Claude Sonnet 4 (default)
+--model opus      # Claude Opus 4 (stronger reasoning)
+```
 
 ---
 
 ## Codex CLI
 
-**Model:** `gpt-5.2-codex` is the default (set in ~/.codex/config.toml)
+**Note:** Codex does not have programmatic plan mode. Plan→approve→execute requires the TUI.
+
+### Quick Start
+
+```bash
+# Codex needs a git repo!
+cd /home/agi01/<project>
+codex exec "Your prompt"
+```
 
 ### Flags
 
 | Flag | Effect |
 |------|--------|
 | `exec "prompt"` | One-shot execution, exits when done |
-| `--full-auto` | Sandboxed but auto-approves in workspace |
-| `--yolo` | NO sandbox, NO approvals (fastest, most dangerous) |
+| `--full-auto` | Sandboxed + auto-approves |
+| `--yolo` | No sandbox + no approvals |
 
-### Building/Creating
+### Background Mode
+
 ```bash
-# Quick one-shot (auto-approves) - remember PTY!
-bash pty:true workdir:~/project command:"codex exec --full-auto 'Build a dark mode toggle'"
-
-# Background for longer work
-bash pty:true workdir:~/project background:true command:"codex --yolo 'Refactor the auth module'"
+bash pty:true workdir:/home/agi01/<project> background:true command:"codex exec --full-auto '<task>'"
+# Returns sessionId
+process action:log sessionId:XXX
 ```
 
-### Reviewing PRs
-
-**⚠️ CRITICAL: Never review PRs in OpenClaw's own project folder!**
-Clone to temp folder or use git worktree.
+### Resume Session
 
 ```bash
-# Clone to temp for safe review
-REVIEW_DIR=$(mktemp -d)
-git clone https://github.com/user/repo.git $REVIEW_DIR
-cd $REVIEW_DIR && gh pr checkout 130
-bash pty:true workdir:$REVIEW_DIR command:"codex review --base origin/main"
-# Clean up after: trash $REVIEW_DIR
-
-# Or use git worktree (keeps main intact)
-git worktree add /tmp/pr-130-review pr-130-branch
-bash pty:true workdir:/tmp/pr-130-review command:"codex review --base main"
+codex exec resume --last "Continue task"
+codex exec resume <SESSION_ID> "Continue task"
 ```
 
-### Batch PR Reviews (parallel army!)
-```bash
-# Fetch all PR refs first
-git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*'
-
-# Deploy the army - one Codex per PR (all with PTY!)
-bash pty:true workdir:~/project background:true command:"codex exec 'Review PR #86. git diff origin/main...origin/pr/86'"
-bash pty:true workdir:~/project background:true command:"codex exec 'Review PR #87. git diff origin/main...origin/pr/87'"
-
-# Monitor all
-process action:list
-
-# Post results to GitHub
-gh pr comment <PR#> --body "<review content>"
-```
-
----
-
-## Claude Code
+### PR Review (TUI Only)
 
 ```bash
-# With PTY for proper terminal output
-bash pty:true workdir:~/project command:"claude 'Your task'"
-
-# Background
-bash pty:true workdir:~/project background:true command:"claude 'Your task'"
+codex review --base main
 ```
 
 ---
@@ -165,8 +196,24 @@ bash pty:true workdir:~/project background:true command:"claude 'Your task'"
 ## OpenCode
 
 ```bash
-bash pty:true workdir:~/project command:"opencode run 'Your task'"
+bash pty:true workdir:/home/agi01/<project> command:"opencode run '<task>'"
 ```
+
+### Session Management
+
+```bash
+opencode session list           # List sessions
+opencode export <sessionId>     # Export transcript
+opencode --session <id>         # Resume session
+```
+
+### Flags
+
+| Flag | Effect |
+|------|--------|
+| `--model provider/model` | Specify model |
+| `--continue` | Continue last session |
+| `--session <id>` | Resume specific session |
 
 ---
 
@@ -174,105 +221,115 @@ bash pty:true workdir:~/project command:"opencode run 'Your task'"
 
 ```bash
 # Install: npm install -g @mariozechner/pi-coding-agent
-bash pty:true workdir:~/project command:"pi 'Your task'"
-
-# Non-interactive mode (PTY still recommended)
-bash pty:true command:"pi -p 'Summarize src/'"
-
-# Different provider/model
-bash pty:true command:"pi --provider openai --model gpt-4o-mini -p 'Your task'"
+bash pty:true workdir:/home/agi01/<project> command:"pi '<task>'"
 ```
 
-**Note:** Pi now has Anthropic prompt caching enabled (PR #584, merged Jan 2026)!
+### Flags
+
+| Flag | Effect |
+|------|--------|
+| `-p "prompt"` | Non-interactive mode |
+| `--provider openai` | Switch provider |
+| `--model gpt-4o-mini` | Switch model |
 
 ---
 
-## Parallel Issue Fixing with git worktrees
-
-For fixing multiple issues in parallel, use git worktrees:
+## Parallel Worktrees (Codex/Pi)
 
 ```bash
-# 1. Create worktrees for each issue
+# Create worktrees for parallel fixes
 git worktree add -b fix/issue-78 /tmp/issue-78 main
 git worktree add -b fix/issue-99 /tmp/issue-99 main
 
-# 2. Launch Codex in each (background + PTY!)
-bash pty:true workdir:/tmp/issue-78 background:true command:"pnpm install && codex --yolo 'Fix issue #78: <description>. Commit and push.'"
-bash pty:true workdir:/tmp/issue-99 background:true command:"pnpm install && codex --yolo 'Fix issue #99: <description>. Commit and push.'"
+# Launch agents
+bash pty:true workdir:/tmp/issue-78 background:true command:"codex --yolo 'Fix issue #78'"
+bash pty:true workdir:/tmp/issue-99 background:true command:"pi 'Fix issue #99'"
 
-# 3. Monitor progress
+# Monitor
 process action:list
-process action:log sessionId:XXX
 
-# 4. Create PRs after fixes
-cd /tmp/issue-78 && git push -u origin fix/issue-78
-gh pr create --repo user/repo --head fix/issue-78 --title "fix: ..." --body "..."
-
-# 5. Cleanup
+# Commit and cleanup
+bash command:"git add . && git commit -m 'fix: ...'" workdir:/tmp/issue-78
 git worktree remove /tmp/issue-78
 git worktree remove /tmp/issue-99
 ```
 
 ---
 
-## ⚠️ Rules
+## Rules
 
-1. **Always use pty:true** - coding agents need a terminal!
-2. **Respect tool choice** - if user asks for Codex, use Codex.
-   - Orchestrator mode: do NOT hand-code patches yourself.
-   - If an agent fails/hangs, respawn it or ask the user for direction, but don't silently take over.
-3. **Be patient** - don't kill sessions because they're "slow"
-4. **Monitor with process:log** - check progress without interfering
-5. **--full-auto for building** - auto-approves changes
-6. **vanilla for reviewing** - no special flags needed
-7. **Parallel is OK** - run many Codex processes at once for batch work
-8. **NEVER start Codex in ~/clawd/** - it'll read your soul docs and get weird ideas about the org chart!
-9. **NEVER checkout branches in ~/Projects/openclaw/** - that's the LIVE OpenClaw instance!
+1. **Always use pty:true** - coding agents need terminals
+2. **Claude Code is primary tool** - accurate plan mode, good session management
+3. **You own the sessionId** - it's yours until you kill it
+4. **Claude Code cannot commit** - review and commit manually
+5. **Read session transcripts** - `~/.claude/sessions/*.jsonl` is source of truth
+6. **Workdir matters** - set correct project path
+7. **Codex has no programmatic plan mode** - use Claude Code for plan→approve→execute
+8. **Don't leave artifacts** - clean up after sessions
 
 ---
 
-## Progress Updates (Critical)
+## Progress Updates
 
-When you spawn coding agents in the background, keep the user in the loop.
+Keep the user in the loop:
 
-- Send 1 short message when you start (what's running + where).
-- Then only update again when something changes:
-  - a milestone completes (build finished, tests passed)
-  - the agent asks a question / needs input
-  - you hit an error or need user action
-  - the agent finishes (include what changed + where)
-- If you kill a session, immediately say you killed it and why.
-
-This prevents the user from seeing only "Agent failed before reply" and having no idea what happened.
+- Send 1 message when starting (what + where)
+- Update when:
+  - Milestone completes
+  - Agent asks for input
+  - Error occurs
+  - Agent finishes (include what changed)
+- If you kill a session, say why
 
 ---
 
-## Auto-Notify on Completion
+## Example: Implement Feature with Claude Code
 
-For long-running background tasks, append a wake trigger to your prompt so OpenClaw gets notified immediately when the agent finishes (instead of waiting for the next heartbeat):
-
-```
-... your task here.
-
-When completely finished, run this command to notify me:
-openclaw gateway wake --text "Done: [brief summary of what was built]" --mode now
-```
-
-**Example:**
 ```bash
-bash pty:true workdir:~/project background:true command:"codex --yolo exec 'Build a REST API for todos.
+# 1. Spawn in plan mode
+bash pty:true background:true workdir:/home/agi01/job-application-agency command:"claude --permission-mode plan 'Add memory_write function to store session context. Include error handling.'"
 
-When completely finished, run: openclaw gateway wake --text \"Done: Built todos REST API with CRUD endpoints\" --mode now'"
+# 2. Review plan (extract sessionId)
+read path:~/.claude/sessions/abc123.jsonl
+
+# 3. Approve with corrections
+bash pty:true background:true command:"claude --session-id abc123 --permission-mode auto 'Good plan. Also add unit tests in tests/ directory.'"
+
+# 4. Wait for completion, review changes
+bash command:"git diff --stat" workdir:/home/agi01/job-application-agency
+bash command:"git diff" workdir:/home/agi01/job-application-agency
+
+# 5. Commit
+bash command:"git add . && git commit -m 'feat: add memory_write function with tests'" workdir:/home/agi01/job-application-agency
+
+# 6. Optional: cleanup
+bash command:"pkill -f 'claude.*session-id abc123'"
 ```
-
-This triggers an immediate wake event — Skippy gets pinged in seconds, not 10 minutes.
 
 ---
 
-## Learnings (Jan 2026)
+## Troubleshooting
 
-- **PTY is essential:** Coding agents are interactive terminal apps. Without `pty:true`, output breaks or agent hangs.
-- **Git repo required:** Codex won't run outside a git directory. Use `mktemp -d && git init` for scratch work.
-- **exec is your friend:** `codex exec "prompt"` runs and exits cleanly - perfect for one-shots.
-- **submit vs write:** Use `submit` to send input + Enter, `write` for raw data without newline.
-- **Sass works:** Codex responds well to playful prompts. Asked it to write a haiku about being second fiddle to a space lobster, got: *"Second chair, I code / Space lobster sets the tempo / Keys glow, I follow"* 🦞
+**Session not responding:**
+```bash
+read path:~/.claude/sessions/<sessionId>.jsonl
+```
+
+**Permission denied (Claude Code):**
+```bash
+which claude
+claude auth status
+```
+
+**Process hung:**
+```bash
+pkill -f claude    # Claude Code
+pkill -f codex    # Codex
+```
+
+---
+
+## Reference
+
+- `COLLABORATION.md` → Policy reference (when/why to use CLI agents). Path: `/home/agi01/clawdbot/COLLABORATION.md`
+- This skill → Technical reference (exact commands)

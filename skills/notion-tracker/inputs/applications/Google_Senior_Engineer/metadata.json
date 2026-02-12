@@ -1,0 +1,19 @@
+{
+  "job_id": "Google_Senior_Engineer",
+  "company": "Google",
+  "title": "Senior Engineer",
+  "location": "Zürich, Switzerland",
+  "link": "https://careers.google.com/jobs/12345",
+  "description": "We are looking for a Senior Engineer to join our team...",
+  "match_score": 0.85,
+  "match_reasoning": "Strong match with Python and backend experience. Candidate has relevant experience with distributed systems.",
+  "key_matches": ["Python", "Django", "PostgreSQL", "AWS"],
+  "missing_skills": ["Kubernetes", "GraphQL"],
+  "strategy_id": "strategy_0",
+  "remote": "hybrid",
+  "seniority": "senior",
+  "salary_estimate": "CHF 150,000 - 200,000",
+  "category": "core",
+  "status": "Generated",
+  "generated_at": "2025-05-10T16:00:00Z"
+}

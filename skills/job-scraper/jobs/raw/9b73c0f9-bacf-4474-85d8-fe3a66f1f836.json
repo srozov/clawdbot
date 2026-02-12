@@ -1,0 +1,21 @@
+{
+  "job_id": "9b73c0f9-bacf-4474-85d8-fe3a66f1f836",
+  "title": "ML Engineer - 2",
+  "link": "https://www.jobs.ch/en/job/9b73c0f9-bacf-4474-85d8-fe3a66f1f836",
+  "company": "StartupXYZ",
+  "location": "Zürich",
+  "workload": "full-time",
+  "publication_date": "2026-02-01T23:49:16.477679",
+  "description": "We are looking for a ML Engineer to join our team. Required skills: .",
+  "tasks": "- Develop and maintain software\n- Collaborate with team\n- Write clean code",
+  "profile": "- Experience with Python\n- Bachelor's degree",
+  "seniority": "mid-level",
+  "employment_type": "permanent",
+  "remote": "hybrid",
+  "raw_salary": "CHF 100,000 - 150,000",
+  "min_salary": 100000.0,
+  "max_salary": 150000.0,
+  "currency": "CHF",
+  "source": "jobs.ch",
+  "strategy_id": "test2"
+}

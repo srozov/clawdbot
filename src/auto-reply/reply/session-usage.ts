@@ -1,4 +1,3 @@
-import { setCliSessionId } from "../../agents/cli-session.js";
 import { hasNonzeroUsage, type NormalizedUsage } from "../../agents/usage.js";
 import {
   type SessionSystemPromptReport,
@@ -15,7 +14,6 @@ export async function persistSessionUsageUpdate(params: {
   providerUsed?: string;
   contextTokensUsed?: number;
   systemPromptReport?: SessionSystemPromptReport;
-  cliSessionId?: string;
   logLabel?: string;
 }): Promise<void> {
   const { storePath, sessionKey } = params;
@@ -42,16 +40,6 @@ export async function persistSessionUsageUpdate(params: {
             systemPromptReport: params.systemPromptReport ?? entry.systemPromptReport,
             updatedAt: Date.now(),
           };
-          const cliProvider = params.providerUsed ?? entry.modelProvider;
-          if (params.cliSessionId && cliProvider) {
-            const nextEntry = { ...entry, ...patch };
-            setCliSessionId(nextEntry, cliProvider, params.cliSessionId);
-            return {
-              ...patch,
-              cliSessionIds: nextEntry.cliSessionIds,
-              claudeCliSessionId: nextEntry.claudeCliSessionId,
-            };
-          }
           return patch;
         },
       });
@@ -74,16 +62,6 @@ export async function persistSessionUsageUpdate(params: {
             systemPromptReport: params.systemPromptReport ?? entry.systemPromptReport,
             updatedAt: Date.now(),
           };
-          const cliProvider = params.providerUsed ?? entry.modelProvider;
-          if (params.cliSessionId && cliProvider) {
-            const nextEntry = { ...entry, ...patch };
-            setCliSessionId(nextEntry, cliProvider, params.cliSessionId);
-            return {
-              ...patch,
-              cliSessionIds: nextEntry.cliSessionIds,
-              claudeCliSessionId: nextEntry.claudeCliSessionId,
-            };
-          }
           return patch;
         },
       });
