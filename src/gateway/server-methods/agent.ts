@@ -202,11 +202,13 @@ export const agentHandlers: GatewayRequestHandlers = {
     }
     let resolvedSessionId = request.sessionId?.trim() || undefined;
     let sessionEntry: SessionEntry | undefined;
+    let isNewSession: boolean | undefined;
     let bestEffortDeliver = false;
     let cfgForAgent: ReturnType<typeof loadConfig> | undefined;
 
     if (requestedSessionKey) {
       const { cfg, storePath, entry, canonicalKey } = loadSessionEntry(requestedSessionKey);
+      isNewSession = !entry;
       cfgForAgent = cfg;
       const now = Date.now();
       // For subagent sessions, use the UUID from the session key as the sessionId
@@ -384,6 +386,7 @@ export const agentHandlers: GatewayRequestHandlers = {
         runId,
         lane: request.lane,
         extraSystemPrompt: request.extraSystemPrompt,
+        isNewSession,
       },
       defaultRuntime,
       context.deps,

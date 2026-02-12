@@ -78,6 +78,8 @@ export type FollowupRun = {
     ownerNumbers?: string[];
     extraSystemPrompt?: string;
     enforceFinalTag?: boolean;
+    /** Whether to resume an existing CLI session (true) or start new (false). */
+    useResume?: boolean;
   };
 };
 

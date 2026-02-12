@@ -42,7 +42,7 @@ describe("runCliAgent resume cleanup", () => {
       model: "gpt-5.2-codex",
       timeoutMs: 1_000,
       runId: "run-1",
-      cliSessionId: "thread-123",
+      useResume: true,
     });
 
     if (process.platform === "win32") {
@@ -57,7 +57,7 @@ describe("runCliAgent resume cleanup", () => {
     expect(pkillArgs[0]).toBe("-f");
     expect(pkillArgs[1]).toContain("codex");
     expect(pkillArgs[1]).toContain("resume");
-    expect(pkillArgs[1]).toContain("thread-123");
+    expect(pkillArgs[1]).toContain("s1");
   });
 });
 

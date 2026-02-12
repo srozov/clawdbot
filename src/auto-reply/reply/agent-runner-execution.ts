@@ -177,6 +177,7 @@ export async function runAgentTurnWithFallback(params: {
               extraSystemPrompt: params.followupRun.run.extraSystemPrompt,
               ownerNumbers: params.followupRun.run.ownerNumbers,
               images: params.opts?.images,
+              useResume: params.followupRun.run.useResume,
             })
               .then(async (result) => {
                 // CLI backends don't emit streaming assistant events, so we need to

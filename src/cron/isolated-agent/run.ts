@@ -351,6 +351,7 @@ export async function runCronIsolatedAgentTurn(params: {
             thinkLevel,
             timeoutMs,
             runId: cronSession.sessionEntry.sessionId,
+            useResume: false,
           });
         }
         return runEmbeddedPiAgent({

@@ -1,5 +1,5 @@
+import crypto from "node:crypto";
 import type { ImageContent } from "@mariozechner/pi-ai";
-import fs from "node:fs/promises";
 import { resolveHeartbeatPrompt } from "../auto-reply/heartbeat.js";
 import type { ThinkLevel } from "../auto-reply/thinking.js";
 import type { OpenClawConfig } from "../config/config.js";
@@ -23,7 +23,6 @@ import {
   parseCliJson,
   parseCliJsonl,
   resolvePromptInput,
-  resolveSessionIdToSend,
   resolveSystemPromptUsage,
   writeCliImages,
 } from "./cli-runner/helpers.js";
@@ -103,19 +102,9 @@ export async function runCliAgent(params: {
     agentId: sessionAgentId,
   });
 
-  const { sessionId: cliSessionIdToSend, isNew } = resolveSessionIdToSend({
-    backend,
-    openClawSessionId: params.sessionId,
-    sessionFileExists: params.sessionFile
-      ? await fs
-          .access(params.sessionFile)
-          .then(() => true)
-          .catch(() => false)
-      : undefined,
-  });
-  // With unified session IDs, we always send the session ID and resume if possible
+  const cliSessionIdToSend = params.sessionId?.trim() || crypto.randomUUID();
   const useResume = Boolean(
-    !isNew && cliSessionIdToSend && backend.resumeArgs && backend.resumeArgs.length > 0,
+    params.useResume && cliSessionIdToSend && backend.resumeArgs && backend.resumeArgs.length > 0,
   );
   const sessionIdSent = cliSessionIdToSend
     ? useResume || Boolean(backend.sessionArg) || Boolean(backend.sessionArgs?.length)
@@ -124,7 +113,7 @@ export async function runCliAgent(params: {
     : undefined;
   const systemPromptArg = resolveSystemPromptUsage({
     backend,
-    isNewSession: isNew,
+    isNewSession: !useResume,
     systemPrompt,
   });
 
@@ -316,6 +305,7 @@ export async function runClaudeCliAgent(params: {
   extraSystemPrompt?: string;
   ownerNumbers?: string[];
   images?: ImageContent[];
+  useResume?: boolean;
 }): Promise<EmbeddedPiRunResult> {
   return runCliAgent({
     sessionId: params.sessionId,
@@ -332,5 +322,6 @@ export async function runClaudeCliAgent(params: {
     extraSystemPrompt: params.extraSystemPrompt,
     ownerNumbers: params.ownerNumbers,
     images: params.images,
+    useResume: params.useResume,
   });
 }

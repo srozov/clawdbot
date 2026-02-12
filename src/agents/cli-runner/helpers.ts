@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -342,21 +341,6 @@ export function resolveSystemPromptUsage(params: {
   if (when === "first" && !params.isNewSession) return null;
   if (!params.backend.systemPromptArg?.trim()) return null;
   return systemPrompt;
-}
-
-export function resolveSessionIdToSend(params: {
-  backend: CliBackendConfig;
-  openClawSessionId?: string;
-  sessionFileExists?: boolean;
-}): { sessionId?: string; isNew: boolean } {
-  const mode = params.backend.sessionMode ?? "always";
-  if (mode === "none") return { sessionId: undefined, isNew: true };
-
-  const sessionId = params.openClawSessionId?.trim() || crypto.randomUUID();
-  // Resume if session file already exists (session was used before)
-  const isNew = params.sessionFileExists !== true;
-
-  return { sessionId, isNew };
 }
 
 export function resolvePromptInput(params: { backend: CliBackendConfig; prompt: string }): {

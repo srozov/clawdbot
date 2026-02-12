@@ -147,10 +147,11 @@ export async function agentCommand(
     sessionEntry: resolvedSessionEntry,
     sessionStore,
     storePath,
-    isNewSession,
+    isNewSession: resolvedIsNewSession,
     persistedThinking,
     persistedVerbose,
   } = sessionResolution;
+  const isNewSession = opts.isNewSession ?? resolvedIsNewSession;
   let sessionEntry = resolvedSessionEntry;
   const runId = opts.runId?.trim() || sessionId;
 
@@ -401,6 +402,7 @@ export async function agentCommand(
               extraSystemPrompt: opts.extraSystemPrompt,
               images: opts.images,
               streamParams: opts.streamParams,
+              useResume: !isNewSession,
             });
           }
           const authProfileId =
