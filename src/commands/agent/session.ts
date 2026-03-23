@@ -115,7 +115,7 @@ export function resolveSession(opts: {
     : false;
   const sessionId =
     opts.sessionId?.trim() || (fresh ? sessionEntry?.sessionId : undefined) || crypto.randomUUID();
-  const isNewSession = !fresh && !opts.sessionId;
+  const isNewSession = !fresh || !(sessionEntry?.systemSent ?? false);
 
   const persistedThinking =
     fresh && sessionEntry?.thinkingLevel

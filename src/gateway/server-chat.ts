@@ -2,6 +2,7 @@ import { normalizeVerboseLevel } from "../auto-reply/thinking.js";
 import { loadConfig } from "../config/config.js";
 import { type AgentEventPayload, getAgentRunContext } from "../infra/agent-events.js";
 import { resolveHeartbeatVisibility } from "../infra/heartbeat-visibility.js";
+import { resolveAgentIdFromSessionKey } from "../routing/session-key.js";
 import { loadSessionEntry } from "./session-utils.js";
 import { formatForLog } from "./ws-log.js";
 
@@ -121,7 +122,7 @@ export type AgentEventHandlerOptions = {
   nodeSendToSession: NodeSendToSession;
   agentRunSeq: Map<string, number>;
   chatRunState: ChatRunState;
-  resolveSessionKeyForRun: (runId: string) => string | undefined;
+  resolveSessionKeyForRun: (runId: string, agentIdHint?: string) => string | undefined;
   clearAgentRunContext: (runId: string) => void;
 };
 
@@ -217,7 +218,11 @@ export function createAgentEventHandler({
 
   return (evt: AgentEventPayload) => {
     const chatLink = chatRunState.registry.peek(evt.runId);
-    const sessionKey = chatLink?.sessionKey ?? resolveSessionKeyForRun(evt.runId);
+    // Use evt.sessionKey as primary source (enriched from run context)
+    // Fallback to registry, then session store lookup
+    const agentIdHint = evt.sessionKey ? resolveAgentIdFromSessionKey(evt.sessionKey) : undefined;
+    const sessionKey =
+      evt.sessionKey ?? chatLink?.sessionKey ?? resolveSessionKeyForRun(evt.runId, agentIdHint);
     const clientRunId = chatLink?.clientRunId ?? evt.runId;
     const isAborted =
       chatRunState.abortedRuns.has(clientRunId) || chatRunState.abortedRuns.has(evt.runId);
@@ -246,6 +251,11 @@ export function createAgentEventHandler({
 
     const lifecyclePhase =
       evt.stream === "lifecycle" && typeof evt.data?.phase === "string" ? evt.data.phase : null;
+
+    if (!sessionKey) {
+      console.warn(`Could not resolve sessionKey for runId ${evt.runId}`);
+      return;
+    }
 
     if (sessionKey) {
       nodeSendToSession(sessionKey, "agent", agentPayload);

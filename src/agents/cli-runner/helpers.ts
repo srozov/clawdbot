@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -130,6 +129,9 @@ export function enqueueCliRun<T>(key: string, task: () => Promise<T>): Promise<T
       CLI_RUN_QUEUE.delete(key);
     }
   });
+  // Suppress unhandled rejection on `tracked` – the caller awaits `chained`
+  // which carries the same rejection and handles it properly.
+  tracked.catch(() => {});
   CLI_RUN_QUEUE.set(key, tracked);
   return chained;
 }
@@ -342,18 +344,6 @@ export function resolveSystemPromptUsage(params: {
   if (when === "first" && !params.isNewSession) return null;
   if (!params.backend.systemPromptArg?.trim()) return null;
   return systemPrompt;
-}
-
-export function resolveSessionIdToSend(params: {
-  backend: CliBackendConfig;
-  cliSessionId?: string;
-}): { sessionId?: string; isNew: boolean } {
-  const mode = params.backend.sessionMode ?? "always";
-  const existing = params.cliSessionId?.trim();
-  if (mode === "none") return { sessionId: undefined, isNew: !existing };
-  if (mode === "existing") return { sessionId: existing, isNew: !existing };
-  if (existing) return { sessionId: existing, isNew: false };
-  return { sessionId: crypto.randomUUID(), isNew: true };
 }
 
 export function resolvePromptInput(params: { backend: CliBackendConfig; prompt: string }): {

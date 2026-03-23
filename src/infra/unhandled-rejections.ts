@@ -1,5 +1,6 @@
 import process from "node:process";
 
+import { isFailoverError } from "../agents/failover-error.js";
 import { extractErrorCode, formatUncaughtError } from "./errors.js";
 
 type UnhandledRejectionHandler = (reason: unknown) => boolean;
@@ -149,6 +150,17 @@ export function installUnhandledRejectionHandler(): void {
     if (isTransientNetworkError(reason)) {
       console.warn(
         "[openclaw] Non-fatal unhandled rejection (continuing):",
+        formatUncaughtError(reason),
+      );
+      return;
+    }
+
+    // FailoverError is an agent-level error (model/CLI failure), not a system error.
+    // It should be handled by the model-fallback layer, but if it leaks as an
+    // unhandled rejection (e.g. from queued promise chains), log and continue.
+    if (isFailoverError(reason)) {
+      console.error(
+        "[openclaw] Non-fatal FailoverError (continuing):",
         formatUncaughtError(reason),
       );
       return;

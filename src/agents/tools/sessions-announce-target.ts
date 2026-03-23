@@ -46,7 +46,10 @@ export async function resolveAnnounceTarget(params: {
     const accountId =
       (typeof deliveryContext?.accountId === "string" ? deliveryContext.accountId : undefined) ??
       (typeof match?.lastAccountId === "string" ? match.lastAccountId : undefined);
-    if (channel && to) return { channel, to, accountId };
+    const threadId =
+      (typeof deliveryContext?.threadId === "string" ? deliveryContext.threadId : undefined) ??
+      (typeof match?.threadId === "string" ? match.threadId : undefined);
+    if (channel && to) return { channel, to, accountId, threadId };
   } catch {
     // ignore
   }

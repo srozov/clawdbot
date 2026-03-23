@@ -8,6 +8,23 @@ import { loadSessionStore, updateSessionStore } from "./store.js";
 import { resolveDefaultSessionStorePath, resolveSessionTranscriptPath } from "./paths.js";
 import { emitSessionTranscriptUpdate } from "../../sessions/transcript-events.js";
 
+/**
+ * Extract threadId from a session key.
+ * Supports both `:topic:` and `:thread:` suffixes.
+ * Returns undefined if no thread/topic suffix is found.
+ */
+function extractThreadIdFromSessionKey(sessionKey: string): string | undefined {
+  // Try :topic: format first (Telegram)
+  const topicMatch = sessionKey.match(/:topic:(\d+)$/);
+  if (topicMatch) return topicMatch[1];
+
+  // Try :thread: format (other platforms)
+  const threadMatch = sessionKey.match(/:thread:(\d+)$/);
+  if (threadMatch) return threadMatch[1];
+
+  return undefined;
+}
+
 function stripQuery(value: string): string {
   const noHash = value.split("#")[0] ?? value;
   return noHash.split("?")[0] ?? noHash;
@@ -87,14 +104,39 @@ export async function appendAssistantMessageToSessionTranscript(params: {
   const storePath = params.storePath ?? resolveDefaultSessionStorePath(params.agentId);
   const store = loadSessionStore(storePath, { skipCache: true });
   const entry = store[sessionKey] as SessionEntry | undefined;
-  if (!entry?.sessionId) return { ok: false, reason: `unknown sessionKey: ${sessionKey}` };
+  if (!entry?.sessionId) {
+    console.error("[transcript] Session entry not found:", {
+      sessionKey,
+      agentId: params.agentId,
+      storeKeys: Object.keys(store),
+    });
+    return { ok: false, reason: `unknown sessionKey: ${sessionKey}` };
+  }
 
-  const sessionFile =
-    entry.sessionFile?.trim() || resolveSessionTranscriptPath(entry.sessionId, params.agentId);
+  // For topic sessions, the sessionFile may not be set correctly (gateway may set it to the
+  // main transcript path). Always extract threadId from the session key and use it to
+  // resolve the correct transcript path.
+  const threadId =
+    extractThreadIdFromSessionKey(sessionKey) ??
+    entry.deliveryContext?.threadId ??
+    entry.lastThreadId;
+  // Always resolve the correct path based on threadId, even if sessionFile is already set
+  const resolvedSessionFile = resolveSessionTranscriptPath(
+    entry.sessionId,
+    params.agentId,
+    threadId,
+  );
 
-  await ensureSessionHeader({ sessionFile, sessionId: entry.sessionId });
+  console.error("[transcript] Writing A2A context:", {
+    sessionKey,
+    threadId,
+    resolvedSessionFile,
+    oldSessionFile: entry.sessionFile,
+  });
 
-  const sessionManager = SessionManager.open(sessionFile);
+  await ensureSessionHeader({ sessionFile: resolvedSessionFile, sessionId: entry.sessionId });
+
+  const sessionManager = SessionManager.open(resolvedSessionFile);
   sessionManager.appendMessage({
     role: "assistant",
     content: [{ type: "text", text: mirrorText }],
@@ -119,15 +161,68 @@ export async function appendAssistantMessageToSessionTranscript(params: {
     timestamp: Date.now(),
   });
 
-  if (!entry.sessionFile || entry.sessionFile !== sessionFile) {
+  if (!entry.sessionFile || entry.sessionFile !== resolvedSessionFile) {
     await updateSessionStore(storePath, (current) => {
       current[sessionKey] = {
         ...entry,
-        sessionFile,
+        sessionFile: resolvedSessionFile,
       };
     });
   }
 
-  emitSessionTranscriptUpdate(sessionFile);
-  return { ok: true, sessionFile };
+  emitSessionTranscriptUpdate(resolvedSessionFile);
+  return { ok: true, sessionFile: resolvedSessionFile };
+}
+
+/**
+ * Persist both user prompt and assistant response for a CLI backend run.
+ * Called after `runCliAgent()` completes so the session JSONL transcript
+ * contains the full conversation (visible in web UI and `sessions_history`).
+ */
+export async function appendCliRunToSessionTranscript(params: {
+  sessionFile: string;
+  sessionId: string;
+  prompt: string;
+  responseText: string;
+  provider: string;
+  model: string;
+  usage?: {
+    input?: number;
+    output?: number;
+    cacheRead?: number;
+    cacheWrite?: number;
+    total?: number;
+  };
+}): Promise<void> {
+  await ensureSessionHeader({ sessionFile: params.sessionFile, sessionId: params.sessionId });
+
+  const sessionManager = SessionManager.open(params.sessionFile);
+
+  sessionManager.appendMessage({
+    role: "user",
+    content: params.prompt,
+    timestamp: Date.now(),
+  });
+
+  const input = params.usage?.input ?? 0;
+  const output = params.usage?.output ?? 0;
+  sessionManager.appendMessage({
+    role: "assistant",
+    content: [{ type: "text", text: params.responseText }],
+    api: "openai-responses",
+    provider: params.provider,
+    model: params.model,
+    usage: {
+      input,
+      output,
+      cacheRead: params.usage?.cacheRead ?? 0,
+      cacheWrite: params.usage?.cacheWrite ?? 0,
+      totalTokens: input + output,
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+    },
+    stopReason: "stop",
+    timestamp: Date.now(),
+  });
+
+  emitSessionTranscriptUpdate(params.sessionFile);
 }

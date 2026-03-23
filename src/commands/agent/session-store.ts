@@ -1,9 +1,6 @@
-import { setCliSessionId } from "../../agents/cli-session.js";
 import { lookupContextTokens } from "../../agents/context.js";
 import { DEFAULT_CONTEXT_TOKENS } from "../../agents/defaults.js";
-import { isCliProvider } from "../../agents/model-selection.js";
 import { hasNonzeroUsage } from "../../agents/usage.js";
-import type { OpenClawConfig } from "../../config/config.js";
 import { type SessionEntry, updateSessionStore } from "../../config/sessions.js";
 
 type RunResult = Awaited<
@@ -11,10 +8,10 @@ type RunResult = Awaited<
 >;
 
 export async function updateSessionStoreAfterAgentRun(params: {
-  cfg: OpenClawConfig;
   contextTokensOverride?: number;
   sessionId: string;
   sessionKey: string;
+  sessionFile?: string;
   storePath: string;
   sessionStore: Record<string, SessionEntry>;
   defaultProvider: string;
@@ -24,7 +21,6 @@ export async function updateSessionStoreAfterAgentRun(params: {
   result: RunResult;
 }) {
   const {
-    cfg,
     sessionId,
     sessionKey,
     storePath,
@@ -53,13 +49,12 @@ export async function updateSessionStoreAfterAgentRun(params: {
     modelProvider: providerUsed,
     model: modelUsed,
     contextTokens,
+    systemSent: true,
+    ...(params.sessionFile ? { sessionFile: params.sessionFile } : undefined),
   };
-  if (isCliProvider(providerUsed, cfg)) {
-    const cliSessionId = result.meta.agentMeta?.sessionId?.trim();
-    if (cliSessionId) setCliSessionId(next, providerUsed, cliSessionId);
-  }
   next.abortedLastRun = result.meta.aborted ?? false;
-  if (hasNonzeroUsage(usage)) {
+  // Always record usage (even if zero) to track session has been used
+  if (usage) {
     const input = usage.input ?? 0;
     const output = usage.output ?? 0;
     const promptTokens = input + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0);

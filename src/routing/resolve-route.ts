@@ -114,16 +114,27 @@ function matchesChannel(
   return key === channel;
 }
 
+function getPeerIdForMatching(peer: RoutePeer, channel: string): string {
+  // For Telegram group peers with topics, strip :topic:X suffix for binding match
+  // This allows bindings to match all topics in a group
+  if (channel === "telegram" && peer.kind === "group") {
+    return peer.id.replace(/:topic:\d+$/, "");
+  }
+  return peer.id;
+}
+
 function matchesPeer(
   match: { peer?: { kind?: string; id?: string } | undefined } | undefined,
   peer: RoutePeer,
+  channel: string,
 ): boolean {
   const m = match?.peer;
   if (!m) return false;
   const kind = normalizeToken(m.kind);
-  const id = normalizeId(m.id);
-  if (!kind || !id) return false;
-  return kind === peer.kind && id === peer.id;
+  const matchId = normalizeId(m.id);
+  const peerId = getPeerIdForMatching(peer, channel);
+  if (!kind || !matchId) return false;
+  return kind === peer.kind && matchId === peerId;
 }
 
 function matchesGuild(
@@ -182,7 +193,7 @@ export function resolveAgentRoute(input: ResolveAgentRouteInput): ResolvedAgentR
   };
 
   if (peer) {
-    const peerMatch = bindings.find((b) => matchesPeer(b.match, peer));
+    const peerMatch = bindings.find((b) => matchesPeer(b.match, peer, channel));
     if (peerMatch) return choose(peerMatch.agentId, "binding.peer");
   }
 

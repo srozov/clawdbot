@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import { resolveAgentModelFallbacksOverride } from "../../agents/agent-scope.js";
 import { runCliAgent } from "../../agents/cli-runner.js";
-import { getCliSessionId } from "../../agents/cli-session.js";
 import { runWithModelFallback } from "../../agents/model-fallback.js";
 import { isCliProvider } from "../../agents/model-selection.js";
 import { runEmbeddedPiAgent } from "../../agents/pi-embedded.js";
@@ -13,6 +12,7 @@ import {
   sanitizeUserFacingText,
 } from "../../agents/pi-embedded-helpers.js";
 import {
+  appendCliRunToSessionTranscript,
   resolveAgentIdFromSessionKey,
   resolveGroupSessionKey,
   resolveSessionTranscriptPath,
@@ -162,7 +162,6 @@ export async function runAgentTurnWithFallback(params: {
                 startedAt,
               },
             });
-            const cliSessionId = getCliSessionId(params.getActiveSessionEntry(), provider);
             return runCliAgent({
               sessionId: params.followupRun.run.sessionId,
               sessionKey: params.sessionKey,
@@ -177,10 +176,10 @@ export async function runAgentTurnWithFallback(params: {
               runId,
               extraSystemPrompt: params.followupRun.run.extraSystemPrompt,
               ownerNumbers: params.followupRun.run.ownerNumbers,
-              cliSessionId,
               images: params.opts?.images,
+              useResume: params.followupRun.run.useResume,
             })
-              .then((result) => {
+              .then(async (result) => {
                 // CLI backends don't emit streaming assistant events, so we need to
                 // emit one with the final text so server-chat can populate its buffer
                 // and send the response to TUI/WebSocket clients.
@@ -191,6 +190,23 @@ export async function runAgentTurnWithFallback(params: {
                     stream: "assistant",
                     data: { text: cliText },
                   });
+                }
+                // Persist CLI transcript so it shows in web UI / sessions_history.
+                const responseText =
+                  result.payloads
+                    ?.map((p) => p.text)
+                    .filter(Boolean)
+                    .join("\n\n") ?? "";
+                if (responseText.trim()) {
+                  await appendCliRunToSessionTranscript({
+                    sessionFile: params.followupRun.run.sessionFile,
+                    sessionId: params.followupRun.run.sessionId,
+                    prompt: params.commandBody,
+                    responseText,
+                    provider,
+                    model,
+                    usage: result.meta.agentMeta?.usage,
+                  }).catch(() => {});
                 }
                 emitAgentEvent({
                   runId,
@@ -500,7 +516,8 @@ export async function runAgentTurnWithFallback(params: {
         try {
           // Delete transcript file if it exists
           if (corruptedSessionId) {
-            const transcriptPath = resolveSessionTranscriptPath(corruptedSessionId);
+            const agentId = resolveAgentIdFromSessionKey(sessionKey);
+            const transcriptPath = resolveSessionTranscriptPath(corruptedSessionId, agentId);
             try {
               fs.unlinkSync(transcriptPath);
             } catch {

@@ -74,4 +74,6 @@ export type AgentCommandOpts = {
   extraSystemPrompt?: string;
   /** Per-call stream param overrides (best-effort). */
   streamParams?: AgentStreamParams;
+  /** Explicit new-session hint from the gateway (overrides freshness check). */
+  isNewSession?: boolean;
 };
