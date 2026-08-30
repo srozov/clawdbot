@@ -36,6 +36,7 @@ type RunManagedLobsterFlowParams = {
   stateJson?: JsonLike;
   currentStep?: string;
   waitingStep?: string;
+  recoveryContext?: { cycleKey?: string; artifacts?: JsonLike };
 };
 
 type ResumeManagedLobsterFlowParams = {
@@ -49,6 +50,7 @@ type ResumeManagedLobsterFlowParams = {
   expectedRevision: number;
   currentStep?: string;
   waitingStep?: string;
+  recoveryContext?: { cycleKey?: string; artifacts?: JsonLike };
 };
 
 export type ManagedLobsterFlowResult =
@@ -127,11 +129,34 @@ function buildApprovalWaitState(envelope: Extract<LobsterEnvelope, { ok: true }>
   } satisfies LobsterApprovalWaitState;
 }
 
+function boundedRecoveryError(value: string, max = 500): string {
+  return value.length > max ? `${value.slice(0, max)}…` : value;
+}
+
+// on_error: pause recovery state. Operational metadata only — the resume token
+// is Lobster's checkpoint handle, so the adapter never reconstructs step state.
+function buildRecoveryState(
+  envelope: Extract<LobsterEnvelope, { ok: true }>,
+  context?: { cycleKey?: string; artifacts?: JsonLike },
+): JsonLike {
+  const rec = envelope.requiresRecovery ?? null;
+  return {
+    kind: "lobster_recovery",
+    ...(context?.cycleKey ? { cycleKey: context.cycleKey } : {}),
+    failedStep: rec?.stepId ?? null,
+    attempts: rec?.attempts ?? null,
+    error: rec ? boundedRecoveryError(rec.error) : null,
+    ...(rec?.resumeToken ? { resumeToken: rec.resumeToken } : {}),
+    ...(context?.artifacts !== undefined ? { artifacts: context.artifacts } : {}),
+  };
+}
+
 function applyEnvelopeToFlow(params: {
   taskFlow: BoundTaskFlow;
   flow: FlowRecord;
   envelope: LobsterEnvelope;
   waitingStep: string;
+  recoveryContext?: { cycleKey?: string; artifacts?: JsonLike };
 }): MutationResult {
   const { taskFlow, flow, envelope, waitingStep } = params;
 
@@ -148,6 +173,21 @@ function applyEnvelopeToFlow(params: {
       expectedRevision: flow.revision,
       currentStep: waitingStep,
       waitJson: buildApprovalWaitState(envelope),
+    });
+  }
+
+  if (envelope.status === "needs_recovery") {
+    const rec = envelope.requiresRecovery ?? null;
+    // blockedSummary makes the managed flow `blocked` (resumable, endedAt null)
+    // rather than a plain approval `waiting`; resume happens through the token.
+    return taskFlow.setWaiting({
+      flowId: flow.flowId,
+      expectedRevision: flow.revision,
+      currentStep: rec?.stepId ?? waitingStep,
+      blockedSummary: rec
+        ? `recovery: ${rec.stepId} failed after ${rec.attempts} attempt(s)`
+        : "recovery: step failed",
+      stateJson: buildRecoveryState(envelope, params.recoveryContext),
     });
   }
 
@@ -187,6 +227,7 @@ export async function runManagedLobsterFlow(
       flow,
       envelope,
       waitingStep: params.waitingStep ?? "await_lobster_approval",
+      recoveryContext: params.recoveryContext,
     });
     if (!envelope.ok) {
       return {
@@ -250,6 +291,7 @@ export async function resumeManagedLobsterFlow(
       flow: resumed.flow,
       envelope,
       waitingStep: params.waitingStep ?? "await_lobster_approval",
+      recoveryContext: params.recoveryContext,
     });
     if (!envelope.ok) {
       return {

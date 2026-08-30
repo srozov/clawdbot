@@ -113,6 +113,48 @@ describe("runManagedLobsterFlow", () => {
     });
   });
 
+  it("blocks the flow for recovery when a step fails with on_error: pause", async () => {
+    const taskFlow = createFakeTaskFlow();
+    const runner = createRunner({
+      ok: true,
+      status: "needs_recovery",
+      output: [],
+      requiresApproval: null,
+      requiresRecovery: {
+        type: "recovery_request",
+        stepId: "score-current-market",
+        attempts: 2,
+        error: "MiniMax request timed out",
+        resumeToken: "recover-1",
+      },
+    });
+
+    const result = await runManagedLobsterFlow({
+      ...createRunFlowParams(taskFlow, runner),
+      recoveryContext: { cycleKey: "career-cycle:x", artifacts: { scoringSet: "/p/set.json" } },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(taskFlow.setWaiting).toHaveBeenCalledWith({
+      flowId: "flow-1",
+      expectedRevision: 1,
+      currentStep: "score-current-market",
+      blockedSummary: "recovery: score-current-market failed after 2 attempt(s)",
+      stateJson: {
+        kind: "lobster_recovery",
+        cycleKey: "career-cycle:x",
+        failedStep: "score-current-market",
+        attempts: 2,
+        error: "MiniMax request timed out",
+        resumeToken: "recover-1",
+        artifacts: { scoringSet: "/p/set.json" },
+      },
+    });
+    // finish/fail must not be called while waiting for recovery.
+    expect(taskFlow.finish).not.toHaveBeenCalled();
+    expect(taskFlow.fail).not.toHaveBeenCalled();
+  });
+
   it("fails the flow when Lobster returns an error envelope", async () => {
     const taskFlow = createFakeTaskFlow();
     const runner = createRunner({

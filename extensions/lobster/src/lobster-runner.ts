@@ -10,7 +10,7 @@ import { installLobsterAjvCompileCache } from "./lobster-ajv-cache.js";
 export type LobsterEnvelope =
   | {
       ok: true;
-      status: "ok" | "needs_approval" | "cancelled";
+      status: "ok" | "needs_approval" | "needs_recovery" | "cancelled";
       output: unknown[];
       requiresApproval: null | {
         type: "approval_request";
@@ -18,6 +18,15 @@ export type LobsterEnvelope =
         items: unknown[];
         resumeToken?: string;
         approvalId?: string;
+      };
+      // on_error: pause — a step failed after retries; the workflow is paused at
+      // that step for operator recovery (resume retries only the failed step).
+      requiresRecovery?: null | {
+        type: "recovery_request";
+        stepId: string;
+        attempts: number;
+        error: string;
+        resumeToken?: string;
       };
     }
   | {
@@ -56,8 +65,15 @@ type EmbeddedToolContext = {
 type EmbeddedToolEnvelope = {
   protocolVersion?: number;
   ok: boolean;
-  status?: "ok" | "needs_approval" | "needs_input" | "cancelled";
+  status?: "ok" | "needs_approval" | "needs_input" | "needs_recovery" | "cancelled";
   output?: unknown[];
+  requiresRecovery?: {
+    type?: "recovery_request";
+    stepId: string;
+    attempts: number;
+    error: string;
+    resumeToken?: string;
+  } | null;
   requiresApproval?: {
     type?: "approval_request";
     prompt: string;
@@ -203,6 +219,17 @@ function normalizeEnvelope(envelope: EmbeddedToolEnvelope): LobsterEnvelope {
               : {}),
             ...(envelope.requiresApproval.approvalId
               ? { approvalId: envelope.requiresApproval.approvalId }
+              : {}),
+          }
+        : null,
+      requiresRecovery: envelope.requiresRecovery
+        ? {
+            type: "recovery_request",
+            stepId: envelope.requiresRecovery.stepId,
+            attempts: envelope.requiresRecovery.attempts,
+            error: envelope.requiresRecovery.error,
+            ...(envelope.requiresRecovery.resumeToken
+              ? { resumeToken: envelope.requiresRecovery.resumeToken }
               : {}),
           }
         : null,
